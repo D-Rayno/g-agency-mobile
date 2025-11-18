@@ -15,7 +15,6 @@ import Button from "@/components/button";
 import Card from "@/components/card";
 import { PasswordInput } from "@/components/input/password";
 import { PasswordStrengthIndicator } from "@/components/password-strength-indicator";
-import { useI18n } from "@/context/i18n";
 import { useTheme } from "@/hooks/use-theme";
 import { useValidationSchemas } from "@/hooks/use-validation-schemas";
 import { type SetPasswordFormData } from "@/validations/auth";
@@ -33,7 +32,6 @@ interface PasswordFormProps {
 // Form content component that watches password changes
 const PasswordFormContent = memo(({ control }: { control: any }) => {
   const { spacing } = useTheme();
-  const { t } = useI18n();
 
   // Watch the newPassword field for strength indicator
   const newPassword = useWatch({
@@ -54,8 +52,8 @@ const PasswordFormContent = memo(({ control }: { control: any }) => {
       <PasswordInput
         control={control}
         name="newPassword"
-        label={t("auth.newPassword")}
-        placeholder={t("auth.newPasswordPlaceholder")}
+        label="auth.newPassword"
+        placeholder="auth.newPasswordPlaceholder"
         required
         autoComplete="new-password"
       />
@@ -66,8 +64,8 @@ const PasswordFormContent = memo(({ control }: { control: any }) => {
       <PasswordInput
         control={control}
         name="confirmPassword"
-        label={t("auth.confirmNewPassword")}
-        placeholder={t("auth.confirmNewPasswordPlaceholder")}
+        label="auth.confirmNewPassword"
+        placeholder="auth.confirmNewPasswordPlaceholder"
         required
         autoComplete="new-password"
       />
@@ -131,7 +129,6 @@ export const PasswordForm = memo(
     onErrorDismiss,
   }: PasswordFormProps) => {
     const { colors, spacing } = useTheme();
-    const { t } = useI18n();
     const {
       schemas: { setPasswordSchema },
       isLoading: schemasLoading,
@@ -235,7 +232,7 @@ export const PasswordForm = memo(
 
                   <View style={styles.submitButton}>
                     <Button
-                      title={isLoading ? t("common.processing") : buttonTitle}
+                      title={isLoading ? "common.processing" : buttonTitle}
                       onPress={handleSubmit(onFormSubmit)}
                       disabled={!isFormReady}
                       variant="primary"

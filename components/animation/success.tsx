@@ -36,7 +36,7 @@ const SuccessFullScreen: React.FC<SuccessFullScreenProps> = ({
 }) => {
   const lottieRef = useRef<AnimRef>(null);
   const [isAnimationComplete, setIsAnimationComplete] = useState(false);
-  const dismissTimeoutRef = useRef<number>(null);
+  const dismissTimeoutRef = useRef<NodeJS.Timeout>(null);
 
   useEffect(() => {
     if (visible) {

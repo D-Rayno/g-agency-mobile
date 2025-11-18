@@ -79,7 +79,7 @@ export const useNotificationStore = create<NotificationState>()(
   persist(
     (set, get) => {
       const service = PushNotificationService.getInstance();
-      let syncTimeoutId: number | null = null;
+      let syncTimeoutId: NodeJS.Timeout | null = null;
 
       // Debounced sync to prevent excessive API calls
       const debouncedSync = () => {
