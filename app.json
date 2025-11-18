@@ -21,7 +21,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "googleServicesFile": "firebase/google-services.json"
+      "googleServicesFile": "firebase/google-services.json",
+      "package": "com.di_rayno.gagencyeventsmobile"
     },
     "web": {
       "output": "static",

@@ -1,11 +1,17 @@
-// services/api.ts - Fixed for React Native
+// services/api.ts
 import { SecureStorage } from '@/utils/secure-storage';
 import NetInfo from '@react-native-community/netinfo';
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3333';
+
+interface RetryConfig {
+  retries: number;
+  retryDelay: number;
+  retryCondition: (error: AxiosError) => boolean;
+}
 
 class ApiService {
   public client: AxiosInstance;
@@ -17,7 +23,7 @@ class ApiService {
 
   constructor() {
     this.client = axios.create({
-      baseURL: `${BASE_URL}/api/admin`,
+      baseURL: `${BASE_URL}/api`,
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -35,20 +41,20 @@ class ApiService {
         // Check network
         const netInfo = await NetInfo.fetch();
         if (!netInfo.isConnected) {
-          throw new Error('No internet connection');
+          return Promise.reject(new Error('No internet connection'));
         }
 
-        // Add auth token
-        const token = await SecureStorage.getItem('auth_access_token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        // Add auth token for admin routes
+        if (config.url?.startsWith('/admin')) {
+          const token = await SecureStorage.getItem('auth_access_token');
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
         }
 
         // Add language
-        const language = await SecureStorage.getItem('user_language');
-        if (language) {
-          config.headers['Accept-Language'] = language;
-        }
+        const language = await SecureStorage.getItem('user_language') || 'fr';
+        config.headers['Accept-Language'] = language;
 
         return config;
       },
@@ -58,14 +64,20 @@ class ApiService {
     // Response interceptor
     this.client.interceptors.response.use(
       (response) => response,
-      async (error) => {
-        const originalRequest = error.config;
+      async (error: AxiosError) => {
+        const originalRequest = error.config as any;
 
         if (!originalRequest) {
           return Promise.reject(error);
         }
 
-        // Handle 401
+        // Handle network errors
+        if (error.message === 'No internet connection' || error.code === 'ECONNABORTED') {
+          this.handleNetworkError();
+          return Promise.reject(error);
+        }
+
+        // Handle 401 - Unauthorized
         if (error.response?.status === 401 && !originalRequest._retry) {
           if (this.isRefreshing) {
             return new Promise((resolve, reject) => {
@@ -89,6 +101,7 @@ class ApiService {
           }
         }
 
+        // Handle other errors
         this.handleApiError(error);
         return Promise.reject(error);
       }
@@ -112,7 +125,7 @@ class ApiService {
       throw new Error('No refresh token');
     }
 
-    const response = await this.client.post('/auth/refresh', { refreshToken });
+    const response = await this.client.post('/admin/auth/refresh', { refreshToken });
     const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
     await SecureStorage.setItem('auth_access_token', accessToken);
@@ -123,53 +136,81 @@ class ApiService {
 
   private async logout() {
     await SecureStorage.multiRemove(['auth_access_token', 'auth_refresh_token', 'auth_user']);
-    router.replace('/(auth)/login');
+    router.replace('/(admin)/login');
+  }
+
+  private handleNetworkError() {
     Toast.show({
       type: 'error',
-      text1: 'Session Expired',
-      text2: 'Please sign in again.',
+      text1: 'Network Error',
+      text2: 'Please check your internet connection and try again.',
     });
   }
 
-  private handleApiError(error: any) {
+  private handleApiError(error: AxiosError) {
+    const response = error.response;
     let errorMessage = 'An unexpected error occurred';
 
-    if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
+    if (response?.data) {
+      const data = response.data as any;
+      errorMessage = data.message || data.error || errorMessage;
     } else if (error.message) {
       errorMessage = error.message;
     }
 
-    Toast.show({
-      type: 'error',
-      text1: 'Error',
-      text2: errorMessage,
+    // Don't show toast for 401 errors (handled by interceptor)
+    if (response?.status !== 401) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: errorMessage,
+      });
+    }
+  }
+
+  // API Methods with better typing
+  async get<T = any>(url: string, params?: any, config?: any): Promise<T> {
+    const response = await this.client.get(url, { params, ...config });
+    return response.data;
+  }
+
+  async post<T = any>(url: string, data?: any, config?: any): Promise<T> {
+    const response = await this.client.post(url, data, config);
+    return response.data;
+  }
+
+  async put<T = any>(url: string, data?: any, config?: any): Promise<T> {
+    const response = await this.client.put(url, data, config);
+    return response.data;
+  }
+
+  async patch<T = any>(url: string, data?: any, config?: any): Promise<T> {
+    const response = await this.client.patch(url, data, config);
+    return response.data;
+  }
+
+  async delete<T = any>(url: string, config?: any): Promise<T> {
+    const response = await this.client.delete(url, config);
+    return response.data;
+  }
+
+  // Upload file with progress
+  async upload<T = any>(
+    url: string,
+    formData: FormData,
+    onProgress?: (progress: number) => void
+  ): Promise<T> {
+    const response = await this.client.post(url, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(progress);
+        }
+      },
     });
-  }
-
-  // API Methods
-  async get<T = any>(url: string, params?: any) {
-    const response = await this.client.get(url, { params });
-    return response.data;
-  }
-
-  async post<T = any>(url: string, data?: any) {
-    const response = await this.client.post(url, data);
-    return response.data;
-  }
-
-  async put<T = any>(url: string, data?: any) {
-    const response = await this.client.put(url, data);
-    return response.data;
-  }
-
-  async patch<T = any>(url: string, data?: any) {
-    const response = await this.client.patch(url, data);
-    return response.data;
-  }
-
-  async delete<T = any>(url: string) {
-    const response = await this.client.delete(url);
     return response.data;
   }
 }
