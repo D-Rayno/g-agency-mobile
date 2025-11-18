@@ -1,45 +1,27 @@
-// src/config/firebase.ts - Firebase Configuration
-import { getAnalytics } from 'firebase/analytics';
-import { FirebaseApp, getApps, initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { Platform } from 'react-native';
+// firebase/config.ts - React Native Firebase
+import analytics from '@react-native-firebase/analytics';
+import messaging from '@react-native-firebase/messaging';
 
-// Firebase configuration - Replace with your actual config
-const firebaseConfig = {
-    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-    measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
-};
+// No initialization needed - configured via google-services.json & GoogleService-Info.plist
 
-// Initialize Firebase
-let app: FirebaseApp;
+export { analytics, messaging };
 
-if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-} else {
-    app = getApps()[0];
+// Request notification permission
+export async function requestNotificationPermission(): Promise<boolean> {
+  const authStatus = await messaging().requestPermission();
+  const enabled =
+    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+  return enabled;
 }
 
-// Initialize services
-const auth = getAuth(app);
-const firestore = getFirestore(app);
-const storage = getStorage(app);
-
-// Analytics only works on web
-let analytics: any = null;
-if (Platform.OS === 'web') {
-    try {
-        analytics = getAnalytics(app);
-    } catch (error) {
-        console.log('Analytics initialization failed:', error);
-    }
+// Get FCM token
+export async function getFCMToken(): Promise<string | null> {
+  try {
+    const token = await messaging().getToken();
+    return token;
+  } catch (error) {
+    console.error('Failed to get FCM token:', error);
+    return null;
+  }
 }
-
-export { analytics, app, auth, firestore, storage };
-export default app;
