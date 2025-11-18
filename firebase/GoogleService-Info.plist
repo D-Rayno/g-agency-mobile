@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyDvJ8-m2ACNKa7rPGRXbjFQN0QO1HnQ7rc</string>
+	<key>GCM_SENDER_ID</key>
+	<string>970572180506</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.aymen-promotion.aygo</string>
+	<key>PROJECT_ID</key>
+	<string>aygo-e246c</string>
+	<key>STORAGE_BUCKET</key>
+	<string>aygo-e246c.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:970572180506:ios:2a80e157c8d03a01b8f5a3</string>
+</dict>
+</plist>
