@@ -1,6 +1,8 @@
-// stores/admin-auth.ts
+// stores/admin-auth.ts - UPDATED WITH PASSWORD
 import { adminApi } from '@/services/admin-api';
 import { SecureStorage } from '@/utils/secure-storage';
+import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import { router } from 'expo-router';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -14,7 +16,7 @@ interface AdminAuthState {
     error: string | null;
 
     // Actions
-    login: (fcmToken?: string) => Promise<boolean>;
+    login: (password: string, deviceId?: string, fcmToken?: string) => Promise<boolean>;
     logout: () => Promise<void>;
     checkAuth: () => Promise<boolean>;
     clearError: () => void;
@@ -31,18 +33,38 @@ export const useAdminAuth = create<AdminAuthState>()(
             isLoading: false,
             error: null,
 
-            // Login
-            login: async (fcmToken?: string) => {
+            // Login with password + device info
+            login: async (password: string, providedDeviceId?: string, fcmToken?: string) => {
                 set({ isLoading: true, error: null });
 
                 try {
-                    const response = await adminApi.login(fcmToken);
+                    // Generate device info
+                    const deviceId = providedDeviceId ||
+                        Constants.deviceId ||
+                        Device.modelId ||
+                        `device_${Date.now()}`;
+
+                    const deviceName = Device.deviceName || 'Unknown Device';
+                    const deviceModel = Device.modelName || undefined;
+                    const osVersion = Device.osVersion || undefined;
+                    const appVersion = Constants.expoConfig?.version || '1.0.0';
+
+                    // Call updated API
+                    const response = await adminApi.login(
+                        password,
+                        deviceId,
+                        deviceName,
+                        deviceModel,
+                        osVersion,
+                        appVersion,
+                        fcmToken
+                    );
 
                     if (response.success && response.data) {
                         const { accessToken, refreshToken } = response.data;
 
-                        await SecureStorage.setItem('auth_access_token', accessToken);
-                        await SecureStorage.setItem('auth_refresh_token', refreshToken);
+                        await SecureStorage.setItem('admin_access_token', accessToken);
+                        await SecureStorage.setItem('admin_refresh_token', refreshToken);
 
                         set({
                             accessToken,
@@ -51,14 +73,17 @@ export const useAdminAuth = create<AdminAuthState>()(
                             isLoading: false,
                         });
 
-                        router.replace('/(admin)/(tabs)');
                         return true;
                     } else {
                         throw new Error(response.message || 'Login failed');
                     }
                 } catch (error: any) {
+                    const errorMessage = error.response?.data?.message ||
+                        error.message ||
+                        'Login failed';
+
                     set({
-                        error: error.message || 'Login failed',
+                        error: errorMessage,
                         isLoading: false,
                         isAuthenticated: false,
                     });
@@ -76,7 +101,7 @@ export const useAdminAuth = create<AdminAuthState>()(
                     console.error('Logout error:', error);
                 }
 
-                await SecureStorage.multiRemove(['auth_access_token', 'auth_refresh_token']);
+                await SecureStorage.multiRemove(['admin_access_token', 'admin_refresh_token']);
 
                 set({
                     accessToken: null,
@@ -90,7 +115,7 @@ export const useAdminAuth = create<AdminAuthState>()(
 
             // Check auth
             checkAuth: async () => {
-                const token = await SecureStorage.getItem('auth_access_token');
+                const token = await SecureStorage.getItem('admin_access_token');
 
                 if (!token) {
                     set({ isAuthenticated: false });
@@ -120,8 +145,8 @@ export const useAdminAuth = create<AdminAuthState>()(
 
             // Set tokens
             setTokens: async (accessToken: string, refreshToken: string) => {
-                await SecureStorage.setItem('auth_access_token', accessToken);
-                await SecureStorage.setItem('auth_refresh_token', refreshToken);
+                await SecureStorage.setItem('admin_access_token', accessToken);
+                await SecureStorage.setItem('admin_refresh_token', refreshToken);
 
                 set({
                     accessToken,

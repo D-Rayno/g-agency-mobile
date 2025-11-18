@@ -1,4 +1,4 @@
-// services/admin-api.ts - FIXED with proper configuration
+// services/admin-api.ts - UPDATED WITH PASSWORD LOGIN
 import type {
     AdminSession,
     AdminStats,
@@ -10,12 +10,9 @@ import type {
 } from '@/types/admin';
 import { SecureStorage } from '@/utils/secure-storage';
 import axios, { AxiosError, AxiosInstance } from 'axios';
-import Constants from 'expo-constants';
-import * as Device from 'expo-device';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
-// Get base URL from environment
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3333';
 
 class AdminApiService {
@@ -27,7 +24,6 @@ class AdminApiService {
     }> = [];
 
     constructor() {
-        // Initialize axios client with proper config
         this.client = axios.create({
             baseURL: `${BASE_URL}/api/admin`,
             timeout: 30000,
@@ -41,7 +37,7 @@ class AdminApiService {
     }
 
     private setupInterceptors() {
-        // Request interceptor - add auth token
+        // Request interceptor
         this.client.interceptors.request.use(
             async (config) => {
                 const token = await SecureStorage.getItem('admin_access_token');
@@ -53,7 +49,7 @@ class AdminApiService {
             (error) => Promise.reject(error)
         );
 
-        // Response interceptor - handle errors and refresh token
+        // Response interceptor
         this.client.interceptors.response.use(
             (response) => response,
             async (error: AxiosError) => {
@@ -63,7 +59,6 @@ class AdminApiService {
                     return Promise.reject(error);
                 }
 
-                // Handle 401 - token refresh
                 if (error.response?.status === 401 && !originalRequest._retry) {
                     if (this.isRefreshing) {
                         return new Promise((resolve, reject) => {
@@ -147,26 +142,33 @@ class AdminApiService {
     }
 
     // ============================================
-    // AUTH
+    // AUTH - UPDATED WITH PASSWORD
     // ============================================
 
-    async login(fcmToken?: string) {
-        const deviceInfo = {
-            deviceId: Constants.deviceId || Device.modelId || 'unknown',
-            deviceName: Device.deviceName || 'Unknown Device',
-            deviceModel: Device.modelName,
-            osVersion: Device.osVersion,
-            appVersion: Constants.expoConfig?.version || '1.0.0',
-            fcmToken,
-        };
-
+    async login(
+        password: string,
+        deviceId: string,
+        deviceName: string,
+        deviceModel?: string,
+        osVersion?: string,
+        appVersion?: string,
+        fcmToken?: string
+    ) {
         const response = await this.client.post<ApiResponse<{
             accessToken: string;
             refreshToken: string;
             expiresAt: string;
             expiresIn: number;
             refreshExpiresAt: string;
-        }>>('/auth/login', deviceInfo);
+        }>>('/auth/login', {
+            password,
+            deviceId,
+            deviceName,
+            deviceModel,
+            osVersion,
+            appVersion,
+            fcmToken,
+        });
 
         return response.data;
     }
@@ -230,7 +232,7 @@ class AdminApiService {
     }
 
     // ============================================
-    // EVENTS
+    // EVENTS (unchanged)
     // ============================================
 
     async getEvents(params?: {
@@ -273,7 +275,7 @@ class AdminApiService {
         return response.data;
     }
 
-    // ============================================
+        // ============================================
     // USERS
     // ============================================
 
