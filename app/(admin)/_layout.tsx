@@ -1,7 +1,7 @@
 // app/(admin)/_layout.tsx
-import { useAdminAuth } from '@/stores/admin-auth';
-import { router, Stack } from 'expo-router';
-import { useEffect } from 'react';
+import { useAdminAuth } from "@/stores/admin-auth";
+import { router, Stack } from "expo-router";
+import { useEffect } from "react";
 
 export default function AdminLayout() {
   const { isAuthenticated, checkAuth } = useAdminAuth();
@@ -10,7 +10,7 @@ export default function AdminLayout() {
     const verify = async () => {
       const valid = await checkAuth();
       if (!valid) {
-        router.replace('/(admin)/login');
+        router.replace("/(admin)/login");
       }
     };
 
@@ -25,10 +25,12 @@ export default function AdminLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="events/[id]" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="users/[id]" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="registrations/[id]" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="(admin)" options={{ headerShown: false }} />
+      <Stack.Screen name="events/[id]" options={{ presentation: "modal" }} />
+      <Stack.Screen name="users/[id]" options={{ presentation: "modal" }} />
+      <Stack.Screen
+        name="registrations/[id]"
+        options={{ presentation: "modal" }} />
     </Stack>
   );
 }

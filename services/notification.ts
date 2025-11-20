@@ -1,6 +1,6 @@
-// services/notification.ts - Refactored service focusing on FCM and API
+// services/notification.ts - Fixed with better error handling
 import { apiClient } from "@/services/api";
-import { ApiResponse } from "@/types/auth";
+import { ApiResponse } from "@/types/api";
 import {
   NotificationHistory,
   NotificationPreferences,
@@ -30,9 +30,8 @@ export class PushNotificationService {
   private isRequestingPermissions: boolean = false;
   private client: AxiosInstance = apiClient;
   private localNotificationService: LocalNotificationService;
-
-  // Listener cleanup functions
   private cleanupFunctions: Array<() => void> = [];
+  private initializationError: Error | null = null;
 
   private constructor() {
     this.localNotificationService = LocalNotificationService.getInstance();
@@ -54,62 +53,91 @@ export class PushNotificationService {
     try {
       console.log("🔧 Initializing notification service...");
 
-      // Initialize local notification service
-      await this.localNotificationService.configure();
-
-      // Register device for remote messages
-      if (!messaging().isDeviceRegisteredForRemoteMessages) {
-        await messaging().registerDeviceForRemoteMessages();
+      // Step 1: Initialize local notification service
+      try {
+        await this.localNotificationService.configure();
+        console.log("✅ Local notifications configured");
+      } catch (error) {
+        console.error("❌ Local notification setup failed:", error);
+        // Continue anyway - push notifications might still work
       }
 
-      // Setup listeners
-      this.setupNotificationListeners();
-      this.setupAppStateListener();
+      // Step 2: Register device for remote messages
+      try {
+        const isRegistered = await messaging().isDeviceRegisteredForRemoteMessages;
+        if (!isRegistered) {
+          console.log("📱 Registering device for remote messages...");
+          await messaging().registerDeviceForRemoteMessages();
+          console.log("✅ Device registered");
+        }
+      } catch (error) {
+        console.error("❌ Device registration failed:", error);
+        throw new Error(`Firebase device registration failed: ${error}`);
+      }
 
-      // Get or restore token
-      await this.initializeToken();
+      // Step 3: Setup listeners
+      try {
+        this.setupNotificationListeners();
+        console.log("✅ Notification listeners setup");
+      } catch (error) {
+        console.error("❌ Listener setup failed:", error);
+        // Continue - we can retry listeners later
+      }
+
+      // Step 4: Setup app state listener
+      try {
+        this.setupAppStateListener();
+        console.log("✅ App state listener setup");
+      } catch (error) {
+        console.error("❌ App state listener failed:", error);
+      }
+
+      // Step 5: Initialize token
+      try {
+        await this.initializeToken();
+        console.log("✅ Token initialized");
+      } catch (error) {
+        console.error("❌ Token initialization failed:", error);
+        // Don't throw - we can retry later
+      }
 
       this.isInitialized = true;
-      console.log("✅ Notification service initialized");
+      console.log("✅ Notification service initialized successfully");
       return true;
-    } catch (error) {
-      console.error("❌ Failed to initialize:", error);
+    } catch (error: any) {
+      console.error("❌ Failed to initialize notification service:", error);
+      this.initializationError = error;
+      
+      // Return false but don't crash the app
       return false;
     }
-  }
-
-  async markNotificationAsRead(notificationId: string): Promise<boolean> {
-    try {
-      await this.client.post(`/notifications/${notificationId}/read`);
-      return true;
-    } catch (error) {
-      console.error("Failed to mark notification as read:", error);
-      return false;
-    }
-  }
-
-  async checkPermissionStatus(): Promise<"granted" | "denied" | "undetermined"> {
-    const status = await this.getPermissionStatus();
-    return status;
   }
 
   private async initializeToken(): Promise<void> {
     try {
       // Try to restore saved token
       const savedToken = await SecureStorage.getItem(TOKEN_STORAGE_KEY);
+      if (savedToken) {
+        this.currentToken = savedToken;
+        console.log("📱 Restored saved token");
+      }
 
+      // Request permissions (won't show dialog if already granted)
       await this.requestPermissions();
 
       // Get fresh token
-      this.currentToken = await messaging().getToken();
-
-      if (this.currentToken.length < 100) {
-        throw new Error("Invalid token length");
+      const newToken = await messaging().getToken();
+      
+      if (!newToken || newToken.length < 100) {
+        throw new Error("Invalid token received from Firebase");
       }
 
+      this.currentToken = newToken;
+
       // Save if different
-      if (savedToken !== this.currentToken) {
-        await SecureStorage.setItem(TOKEN_STORAGE_KEY, this.currentToken);
+      if (savedToken !== newToken) {
+        await SecureStorage.setItem(TOKEN_STORAGE_KEY, newToken);
+        console.log("💾 New token saved");
       }
 
       // Setup token refresh listener
@@ -121,8 +149,7 @@ export class PushNotificationService {
       });
 
       this.cleanupFunctions.push(unsubscribe);
-
-      console.log("📱 Token initialized");
+      console.log("📱 Token initialized successfully");
     } catch (error) {
       console.error("❌ Token initialization failed:", error);
       throw error;
@@ -151,63 +178,72 @@ export class PushNotificationService {
   private setupNotificationListeners(): void {
     console.log("👂 Setting up notification listeners");
 
-    // Foreground messages
-    const unsubscribeForeground = messaging().onMessage(
-      async (message: FirebaseMessagingTypes.RemoteMessage) => {
-        console.log("📨 Foreground notification:", message.notification?.title);
+    try {
+      // Foreground messages
+      const unsubscribeForeground = messaging().onMessage(
+        async (message: FirebaseMessagingTypes.RemoteMessage) => {
+          console.log("📨 Foreground notification:", message.notification?.title);
 
-        if (message.notification) {
-          this.localNotificationService.showNotification(
-            message.notification.title || "Notification",
-            message.notification.body || "",
-            message.data || {},
-            {
-              channelId: (message.data?.category as string) || "default",
-              priority: message.data?.priority === "high" ? "high" : "default",
-            }
-          );
+          if (message.notification) {
+            this.localNotificationService.showNotification(
+              message.notification.title || "Notification",
+              message.notification.body || "",
+              message.data || {},
+              {
+                channelId: (message.data?.category as string) || "default",
+                priority: message.data?.priority === "high" ? "high" : "default",
+              }
+            );
+          }
         }
-      }
-    );
+      );
 
-    // Background messages
-    messaging().setBackgroundMessageHandler(
-      async (message: FirebaseMessagingTypes.RemoteMessage) => {
-        console.log("📨 Background notification:", message.notification?.title);
-      }
-    );
-
-    // Notification opened from background
-    const unsubscribeOpened = messaging().onNotificationOpenedApp(
-      (message: FirebaseMessagingTypes.RemoteMessage) => {
-        console.log("👆 Notification tapped (background)");
-        this.handleNotificationTap(message.data);
-      }
-    );
-
-    // App opened from notification (killed state)
-    messaging()
-      .getInitialNotification()
-      .then((message: FirebaseMessagingTypes.RemoteMessage | null) => {
-        if (message) {
-          console.log("👆 App opened from notification");
-          setTimeout(() => {
-            this.handleNotificationTap(message.data);
-          }, 1500);
+      // Background messages
+      messaging().setBackgroundMessageHandler(
+        async (message: FirebaseMessagingTypes.RemoteMessage) => {
+          console.log("📨 Background notification:", message.notification?.title);
         }
-      });
+      );
 
-    this.cleanupFunctions.push(unsubscribeForeground, unsubscribeOpened);
+      // Notification opened from background
+      const unsubscribeOpened = messaging().onNotificationOpenedApp(
+        (message: FirebaseMessagingTypes.RemoteMessage) => {
+          console.log("👆 Notification tapped (background)");
+          this.handleNotificationTap(message.data);
+        }
+      );
+
+      // App opened from notification (killed state)
+      messaging()
+        .getInitialNotification()
+        .then((message: FirebaseMessagingTypes.RemoteMessage | null) => {
+          if (message) {
+            console.log("👆 App opened from notification");
+            setTimeout(() => {
+              this.handleNotificationTap(message.data);
+            }, 1500);
+          }
+        });
+
+      this.cleanupFunctions.push(unsubscribeForeground, unsubscribeOpened);
+    } catch (error) {
+      console.error("❌ Error setting up listeners:", error);
+      throw error;
+    }
   }
 
   private setupAppStateListener(): void {
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
-      if (nextAppState === "active") {
-        this.refreshTokenIfNeeded();
-      }
-    });
+    try {
+      const subscription = AppState.addEventListener("change", (nextAppState) => {
+        if (nextAppState === "active") {
+          this.refreshTokenIfNeeded();
+        }
+      });
 
-    this.cleanupFunctions.push(() => subscription.remove());
+      this.cleanupFunctions.push(() => subscription.remove());
+    } catch (error) {
+      console.error("❌ App state listener error:", error);
+    }
   }
 
   private async refreshTokenIfNeeded(): Promise<void> {
@@ -229,23 +265,24 @@ export class PushNotificationService {
     console.log("🔄 Processing notification tap:", data);
 
     try {
-      // Navigate based on data
       if (data?.url) {
         router.push(data.url);
       } else if (data?.screen) {
         router.push(data.screen);
-      } else if (data?.type === "test") {
-        router.push("/(protected)/profile");
       } else {
-        router.push("/(protected)");
+        router.push("/(admin)");
       }
     } catch (error) {
       console.error("❌ Navigation error:", error);
-      router.push("/(protected)");
+      router.push("/(admin)");
     }
   }
 
   // Public API Methods
+
+  getInitializationError(): Error | null {
+    return this.initializationError;
+  }
 
   async getPermissionStatus(): Promise<"granted" | "denied" | "undetermined"> {
     try {
@@ -331,6 +368,20 @@ export class PushNotificationService {
     }
   }
 
+  async markNotificationAsRead(notificationId: string): Promise<boolean> {
+    try {
+      await this.client.post(`/notifications/${notificationId}/read`);
+      return true;
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+      return false;
+    }
+  }
+
+  async checkPermissionStatus(): Promise<"granted" | "denied" | "undetermined"> {
+    return this.getPermissionStatus();
+  }
+
   async subscribe(options: SubscribeOptions = {}): Promise<{
     success: boolean;
     error?: string;
@@ -354,7 +405,7 @@ export class PushNotificationService {
         categories,
       });
 
-      if (response.data.status === "success") {
+      if (response.data.success) {
         await SecureStorage.setItem(SUBSCRIPTION_STATUS_KEY, "true");
         await SecureStorage.setItem(SUBSCRIPTION_CATEGORIES_KEY, JSON.stringify(categories));
         return { success: true };
@@ -417,7 +468,7 @@ export class PushNotificationService {
         "/notifications/subscriptions"
       );
 
-      if (response.data.status === "success" && response.data.data) {
+      if (response.data.success && response.data.data) {
         return response.data.data.subscriptions;
       }
       return [];
@@ -439,7 +490,7 @@ export class PushNotificationService {
         }>
       >(`/notifications/history?limit=${limit}&offset=${offset}`);
 
-      if (response.data.status === "success" && response.data.data) {
+      if (response.data.success && response.data.data) {
         const notifications = response.data.data.notifications.map((notif) => ({
           ...notif,
           isRead: notif.isRead ?? false,
@@ -465,7 +516,7 @@ export class PushNotificationService {
     try {
       const response = await this.client.put("/notifications/preferences", preferences);
 
-      if (response.data.status === "success") {
+      if (response.data.success) {
         return { success: true };
       } else {
         return {
@@ -492,7 +543,7 @@ export class PushNotificationService {
         "/notifications/preferences"
       );
 
-      if (response.data.status === "success" && response.data.data) {
+      if (response.data.success && response.data.data) {
         return {
           success: true,
           data: response.data.data,
@@ -524,7 +575,6 @@ export class PushNotificationService {
         return false;
       }
 
-      // Show local notification
       this.localNotificationService.showNotification(
         "Test Notification",
         "This is a test notification. Tap to open the app!",
@@ -538,12 +588,11 @@ export class PushNotificationService {
         }
       );
 
-      // Request server test
       const response = await this.client.post("/notifications/test", {
         token: this.currentToken,
       });
 
-      return response.data.status === "success";
+      return response.data.success;
     } catch (error) {
       console.error("Test notification failed:", error);
       return false;
@@ -553,7 +602,7 @@ export class PushNotificationService {
   async testSubscription(subscriptionId: string): Promise<boolean> {
     try {
       const response = await this.client.post(`/notifications/test/${subscriptionId}`);
-      return response.data.status === "success";
+      return response.data.success;
     } catch (error) {
       console.error(`Test notification for subscription ${subscriptionId} failed:`, error);
       return false;
@@ -563,7 +612,7 @@ export class PushNotificationService {
   async testAllSubscriptions(): Promise<boolean> {
     try {
       const response = await this.client.post("/notifications/test-all");
-      return response.data.status === "success";
+      return response.data.success;
     } catch (error) {
       console.error("Test all subscriptions failed:", error);
       return false;
@@ -587,7 +636,7 @@ export class PushNotificationService {
   }
 
   cleanup(): void {
-    console.log("Cleaning up notification service");
+    console.log("🧹 Cleaning up notification service");
 
     this.cleanupFunctions.forEach((cleanup) => {
       try {
@@ -599,5 +648,8 @@ export class PushNotificationService {
 
     this.cleanupFunctions = [];
     this.isInitialized = false;
+    this.initializationError = null;
+    
+    console.log("✅ Notification service cleaned up");
   }
 }
