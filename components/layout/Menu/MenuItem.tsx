@@ -1,110 +1,76 @@
-import { useTheme } from "@/hooks/use-theme";
-import { Ionicons } from "@expo/vector-icons";
-import { memo } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+// components/layout/Menu/MenuItem.tsx
+/**
+ * Menu Item Component for Settings/Profile Menus
+ * Pure NativeWind styling - no theme hooks
+ */
+
+import { cn } from '@/utils/cn';
+import { Ionicons } from '@expo/vector-icons';
+import { memo } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 type MenuItemProps = {
   title: string;
   subtitle?: string;
   icon: string;
   onPress: () => void;
-  variant?: "default" | "danger";
+  variant?: 'default' | 'danger';
   disabled?: boolean;
   showArrow?: boolean;
 };
 
-export const MenuItem = memo(({ 
-  title, 
-  subtitle, 
-  icon, 
-  onPress, 
-  variant = "default", 
-  disabled = false,
-  showArrow = true 
-}: MenuItemProps) => {
-  const { colors, spacing, typography, radius } = useTheme();
+export const MenuItem = memo(
+  ({
+    title,
+    subtitle,
+    icon,
+    onPress,
+    variant = 'default',
+    disabled = false,
+    showArrow = true,
+  }: MenuItemProps) => {
+    const isDanger = variant === 'danger';
+    const iconColor = isDanger ? '#EF4444' : '#4F46E5';
+    const titleColor = isDanger ? '#EF4444' : '#1F2937';
+    const iconBgColor = isDanger ? '#FEE2E2' : '#EEF2FF';
 
-  const isDanger = variant === "danger";
-  const iconColor = isDanger ? colors.danger : colors.primary;
-  const titleColor = isDanger ? colors.danger : colors.text;
-  const iconBgColor = isDanger ? colors.danger + "15" : colors.primary + "15";
-
-  const styles = StyleSheet.create({
-    container: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.md,
-      backgroundColor: colors.card,
-      borderRadius: radius.md,
-      // Subtle shadow for depth
-      shadowColor: colors.dark,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
-      elevation: 1,
-    },
-    iconContainer: {
-      width: 44,
-      height: 44,
-      borderRadius: radius.sm + 2,
-      backgroundColor: iconBgColor,
-      justifyContent: "center",
-      alignItems: "center",
-      marginRight: spacing.md,
-    },
-    content: {
-      flex: 1,
-    },
-    title: {
-      fontSize: typography.body.fontSize,
-      fontWeight: "600",
-      color: titleColor,
-      marginBottom: subtitle ? spacing.xs / 2 : 0,
-    },
-    subtitle: {
-      fontSize: typography.caption.fontSize,
-      color: colors.muted,
-      lineHeight: 16,
-    },
-    arrow: {
-      marginLeft: spacing.sm,
-      opacity: 0.6,
-    },
-  });
-
-  return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={onPress}
-      activeOpacity={0.7}
-      disabled={disabled}
-    >
-      <View style={styles.iconContainer}>
-        <Ionicons
-          name={icon as any}
-          size={22}
-          color={iconColor}
-        />
-      </View>
-      
-      <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        {subtitle && (
-          <Text style={styles.subtitle}>{subtitle}</Text>
+    return (
+      <TouchableOpacity
+        className={cn(
+          'flex-row items-center py-4 px-4 bg-white rounded-xl shadow-sm',
+          disabled && 'opacity-50'
         )}
-      </View>
-      
-      {showArrow && (
-        <Ionicons
-          name="chevron-forward"
-          size={20}
-          color={colors.muted}
-          style={styles.arrow}
-        />
-      )}
-    </TouchableOpacity>
-  );
-});
+        onPress={onPress}
+        activeOpacity={0.7}
+        disabled={disabled}
+      >
+        {/* Icon Container */}
+        <View
+          className="w-11 h-11 rounded-lg justify-center items-center mr-4"
+          style={{ backgroundColor: iconBgColor }}
+        >
+          <Ionicons name={icon as any} size={22} color={iconColor} />
+        </View>
 
-MenuItem.displayName = "MenuItem";
+        {/* Content */}
+        <View className="flex-1">
+          <Text className="text-base font-semibold" style={{ color: titleColor }}>
+            {title}
+          </Text>
+          {subtitle && (
+            <Text className="text-sm text-gray-500 leading-4 mt-0.5">{subtitle}</Text>
+          )}
+        </View>
+
+        {/* Arrow */}
+        {showArrow && (
+          <View className="ml-2 opacity-60">
+            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  }
+);
+
+MenuItem.displayName = 'MenuItem';

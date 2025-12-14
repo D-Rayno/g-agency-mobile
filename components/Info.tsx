@@ -1,16 +1,14 @@
-// components/info.tsx
+// components/Info.tsx
+/**
+ * Info/Alert Component with Animations
+ * Pure NativeWind styling - no theme hooks
+ */
+
 import { Feather } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
-import {
-    Animated,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import { Animated, Text, TouchableOpacity, View } from 'react-native';
 
-import Button from '@/components/button';
-import { useTheme } from '@/hooks/use-theme';
+import { Button } from '@/components/ui';
 
 export interface InfoProps {
   type?: 'info' | 'success' | 'warning' | 'error';
@@ -45,13 +43,14 @@ export default function Info({
   visible = true,
   animationDuration = 300,
 }: InfoProps) {
-  const { colors, spacing, typography, radius } = useTheme();
   const slideAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [shouldRender, setShouldRender] = React.useState(visible);
 
   // Animation effect
   useEffect(() => {
     if (visible) {
+      setShouldRender(true);
       // Enter animation
       Animated.parallel([
         Animated.timing(slideAnim, {
@@ -78,7 +77,9 @@ export default function Info({
           duration: animationDuration / 2,
           useNativeDriver: true,
         }),
-      ]).start(handleAnimationComplete);
+      ]).start(() => {
+        setShouldRender(false);
+      });
     }
   }, [visible, slideAnim, fadeAnim, animationDuration]);
 
@@ -103,37 +104,37 @@ export default function Info({
     }
   };
 
-  // Get theme colors based on type
+  // Get colors based on type
   const getTypeColors = () => {
     switch (type) {
       case 'success':
         return {
-          background: colors.success + '15',
-          border: colors.success + '30',
-          text: colors.success,
-          icon: colors.success,
+          background: '#D1FAE5',
+          border: '#A7F3D0',
+          text: '#059669',
+          icon: '#059669',
         };
       case 'warning':
         return {
-          background: colors.warning + '15',
-          border: colors.warning + '30',
-          text: colors.warning,
-          icon: colors.warning,
+          background: '#FEF3C7',
+          border: '#FDE68A',
+          text: '#D97706',
+          icon: '#D97706',
         };
       case 'error':
         return {
-          background: colors.danger + '15',
-          border: colors.danger + '30',
-          text: colors.danger,
-          icon: colors.danger,
+          background: '#FEE2E2',
+          border: '#FECACA',
+          text: '#DC2626',
+          icon: '#DC2626',
         };
       case 'info':
       default:
         return {
-          background: colors.info + '15',
-          border: colors.info + '30',
-          text: colors.info,
-          icon: colors.info,
+          background: '#DBEAFE',
+          border: '#BFDBFE',
+          text: '#2563EB',
+          icon: '#2563EB',
         };
     }
   };
@@ -156,81 +157,10 @@ export default function Info({
   const typeColors = getTypeColors();
   const displayIcon = icon || getDefaultIcon();
 
-  const styles = StyleSheet.create({
-    container: {
-      backgroundColor: typeColors.background,
-      borderColor: typeColors.border,
-      borderWidth: 1,
-      borderRadius: radius.sm,
-      padding: spacing.md,
-      marginVertical: spacing.xs,
-      ...style,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'space-between',
-      marginBottom: title ? spacing.xs : 0,
-    },
-    leftContent: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      flex: 1,
-    },
-    iconContainer: {
-      marginRight: spacing.sm,
-      marginTop: 2, // Align with text baseline
-    },
-    textContainer: {
-      flex: 1,
-    },
-    title: {
-      fontSize: typography.body.fontSize,
-      fontWeight: '600',
-      color: typeColors.text,
-      marginBottom: spacing.xs,
-    },
-    message: {
-      fontSize: typography.caption.fontSize,
-      color: typeColors.text,
-      lineHeight: 18,
-    },
-    rightActions: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: spacing.xs,
-      marginLeft: spacing.sm,
-    },
-    dismissButton: {
-      padding: spacing.xs / 2,
-      borderRadius: radius.xs,
-      backgroundColor: typeColors.text + '10',
-    },
-    actionButtonContainer: {
-      marginTop: spacing.sm,
-      alignItems: 'flex-start',
-    },
-  });
-
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [-20, 0],
   });
-
-  // Track if component should render during animation
-  const [shouldRender, setShouldRender] = React.useState(visible);
-
-  React.useEffect(() => {
-    if (visible) {
-      setShouldRender(true);
-    }
-  }, [visible]);
-
-  const handleAnimationComplete = () => {
-    if (!visible) {
-      setShouldRender(false);
-    }
-  };
 
   if (!shouldRender) {
     return null;
@@ -238,18 +168,21 @@ export default function Info({
 
   return (
     <Animated.View
+      className="border rounded-lg p-4 my-1"
       style={[
-        styles.container,
         {
+          backgroundColor: typeColors.background,
+          borderColor: typeColors.border,
           opacity: fadeAnim,
           transform: [{ translateY }],
         },
+        style,
       ]}
     >
-      <View style={styles.header}>
-        <View style={styles.leftContent}>
+      <View className="flex-row items-start justify-between mb-0">
+        <View className="flex-row items-start flex-1">
           {/* Icon */}
-          <View style={styles.iconContainer}>
+          <View className="mr-2 mt-0.5">
             <Feather
               name={displayIcon.name as any}
               size={displayIcon.size || 20}
@@ -258,17 +191,27 @@ export default function Info({
           </View>
 
           {/* Text Content */}
-          <View style={styles.textContainer}>
-            {title && <Text style={styles.title}>{title}</Text>}
-            <Text style={styles.message}>{message}</Text>
+          <View className="flex-1">
+            {title && (
+              <Text
+                className="text-base font-semibold mb-1"
+                style={{ color: typeColors.text }}
+              >
+                {title}
+              </Text>
+            )}
+            <Text className="text-sm leading-relaxed" style={{ color: typeColors.text }}>
+              {message}
+            </Text>
           </View>
         </View>
 
         {/* Right Actions */}
-        <View style={styles.rightActions}>
+        <View className="flex-row items-start gap-1 ml-2">
           {dismissible && (
             <TouchableOpacity
-              style={styles.dismissButton}
+              className="p-1 rounded"
+              style={{ backgroundColor: typeColors.text + '10' }}
               onPress={handleDismiss}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
@@ -280,14 +223,14 @@ export default function Info({
 
       {/* Action Button */}
       {actionButton && (
-        <View style={styles.actionButtonContainer}>
+        <View className="mt-2 items-start">
           <Button
-            title={actionButton.title}
             onPress={actionButton.onPress}
             variant={actionButton.variant || 'secondary'}
-            compact
-            soft
-          />
+            size="sm"
+          >
+            {actionButton.title}
+          </Button>
         </View>
       )}
     </Animated.View>

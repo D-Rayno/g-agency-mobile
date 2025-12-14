@@ -1,19 +1,22 @@
 // app/(admin)/scan.tsx
+/**
+ * QR Code Scanner Screen
+ * Pure NativeWind styling - no theme hooks
+ */
+
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Container } from '@/components/ui/Container';
 import { BodyText, Caption, Heading3 } from '@/components/ui/Typography';
-import { useTheme } from '@/hooks/use-theme';
 import { adminApi } from '@/services/api/admin-api';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function QRScannerScreen() {
-  const { colors, spacing } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -76,9 +79,9 @@ export default function QRScannerScreen() {
 
   if (!permission) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <SafeAreaView className="flex-1 bg-gray-50">
         <Container safe>
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg }}>
+          <View className="flex-1 justify-center items-center p-6">
             <BodyText align="center">Requesting camera permission...</BodyText>
           </View>
         </Container>
@@ -88,10 +91,10 @@ export default function QRScannerScreen() {
 
   if (!permission.granted) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <SafeAreaView className="flex-1 bg-gray-50">
         <Container safe>
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg }}>
-            <Ionicons name="camera-outline" size={64} color={colors.muted} style={{ marginBottom: spacing.lg }} />
+          <View className="flex-1 justify-center items-center p-6">
+            <Ionicons name="camera-outline" size={64} color="#9CA3AF" className="mb-6" />
             <Heading3 align="center" className="mb-4">Camera Permission Required</Heading3>
             <BodyText align="center" color="gray" className="mb-6">
               We need your permission to use the camera for scanning QR codes
@@ -106,50 +109,53 @@ export default function QRScannerScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 justify-center">
+          <Ionicons name="arrow-back" size={24} color="#111827" />
         </TouchableOpacity>
         <Heading3>Scan QR Code</Heading3>
-        <View style={{ width: 40 }} />
+        <View className="w-10" />
       </View>
 
       {/* Camera View */}
-      <View style={styles.cameraContainer}>
+      <View className="flex-1">
         <CameraView
           onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-          style={styles.camera}
+          className="flex-1"
           barcodeScannerSettings={{
             barcodeTypes: ['qr'],
           }}
         >
           {/* Scanning Overlay */}
-          <View style={styles.overlay}>
-            <View style={styles.unfocusedContainer} />
-            <View style={styles.middleContainer}>
-              <View style={styles.unfocusedContainer} />
-              <View style={[styles.focusedContainer, { borderColor: scanned ? colors.success : colors.primary }]}>
+          <View className="flex-1">
+            <View className="flex-1 bg-black/60" />
+            <View className="flex-row flex-[1.5]">
+              <View className="flex-1 bg-black/60" />
+              <View 
+                className="flex-[6] border-2 rounded-2xl relative"
+                style={{ borderColor: scanned ? '#10B981' : '#1F6F61' }}
+              >
                 {!scanned && (
-                  <View style={styles.scanningLine}>
-                    <View style={[styles.scanLine, { backgroundColor: colors.primary }]} />
+                  <View className="flex-1 justify-center items-center">
+                    <View className="w-[90%] h-0.5 bg-primary-600 opacity-80" />
                   </View>
                 )}
                 {scanned && (
-                  <View style={styles.scannedIndicator}>
-                    <Ionicons name="checkmark-circle" size={48} color={colors.success} />
+                  <View className="flex-1 justify-center items-center bg-white/10">
+                    <Ionicons name="checkmark-circle" size={48} color="#10B981" />
                   </View>
                 )}
               </View>
-              <View style={styles.unfocusedContainer} />
+              <View className="flex-1 bg-black/60" />
             </View>
-            <View style={styles.unfocusedContainer} />
+            <View className="flex-1 bg-black/60" />
           </View>
 
           {/* Instructions */}
-          <View style={styles.instructionsContainer}>
-            <Text style={[styles.instructions, { color: colors.card }]}>
+          <View className="absolute bottom-24 left-0 right-0 items-center">
+            <Text className="text-base font-semibold text-white text-center px-6 py-3 bg-black/70 rounded-lg">
               {scanned ? 'QR Code Scanned' : 'Position QR code within the frame'}
             </Text>
           </View>
@@ -158,14 +164,14 @@ export default function QRScannerScreen() {
 
       {/* Registration Details */}
       {registrationData && (
-        <View style={[styles.detailsContainer, { backgroundColor: colors.background }]}>
+        <View className="p-4 bg-white rounded-t-3xl shadow-lg">
           <Card className="p-4">
-            <View style={{ marginBottom: spacing.md }}>
+            <View className="mb-4">
               <Caption color="gray" className="mb-1">Event</Caption>
               <BodyText weight="semibold">{registrationData.event?.name || 'Unknown Event'}</BodyText>
             </View>
 
-            <View style={{ marginBottom: spacing.md }}>
+            <View className="mb-4">
               <Caption color="gray" className="mb-1">Participant</Caption>
               <BodyText weight="semibold">
                 {registrationData.user?.firstName} {registrationData.user?.lastName}
@@ -173,30 +179,28 @@ export default function QRScannerScreen() {
               <Caption>{registrationData.user?.email}</Caption>
             </View>
 
-            <View style={{ marginBottom: spacing.md }}>
+            <View className="mb-4">
               <Caption color="gray" className="mb-1">Status</Caption>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View className="flex-row items-center">
                 <View
+                  className="px-2 py-1 rounded"
                   style={{
                     backgroundColor:
                       registrationData.status === 'confirmed'
-                        ? colors.success + '20'
+                        ? '#D1FAE5'
                         : registrationData.status === 'attended'
-                        ? colors.primary + '20'
-                        : colors.warning + '20',
-                    paddingHorizontal: 8,
-                    paddingVertical: 4,
-                    borderRadius: 4,
+                        ? '#DBEAFE'
+                        : '#FEF3C7',
                   }}
                 >
                   <Caption
                     style={{
                       color:
                         registrationData.status === 'confirmed'
-                          ? colors.success
+                          ? '#059669'
                           : registrationData.status === 'attended'
-                          ? colors.primary
-                          : colors.warning,
+                          ? '#2563EB'
+                          : '#D97706',
                       fontWeight: 'bold',
                       fontSize: 12,
                     }}
@@ -207,21 +211,23 @@ export default function QRScannerScreen() {
               </View>
             </View>
 
-            <View style={{ flexDirection: 'row' }}>
-              <Button
-                variant="outline"
-                onPress={handleCancel}
-                style={{ flex: 1, marginRight: spacing.sm }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onPress={handleConfirmAttendance}
-                style={{ flex: 1 }}
-                disabled={registrationData.status === 'attended'}
-              >
-                {registrationData.status === 'attended' ? 'Already Confirmed' : 'Confirm Attendance'}
-              </Button>
+            <View className="flex-row gap-2">
+              <View className="flex-1">
+                <Button
+                  variant="outline"
+                  onPress={handleCancel}
+                >
+                  Cancel
+                </Button>
+              </View>
+              <View className="flex-1">
+                <Button
+                  onPress={handleConfirmAttendance}
+                  isDisabled={registrationData.status === 'attended'}
+                >
+                  {registrationData.status === 'attended' ? 'Already Confirmed' : 'Confirm Attendance'}
+                </Button>
+              </View>
             </View>
           </Card>
         </View>
@@ -229,87 +235,3 @@ export default function QRScannerScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-  },
-  cameraContainer: {
-    flex: 1,
-  },
-  camera: {
-    flex: 1,
-  },
-  overlay: {
-    flex: 1,
-  },
-  unfocusedContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-  },
-  middleContainer: {
-    flexDirection: 'row',
-    flex: 1.5,
-  },
-  focusedContainer: {
-    flex: 6,
-    borderWidth: 2,
-    borderRadius: 16,
-    position: 'relative',
-  },
-  scanningLine: {
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scanLine: {
-    width: '90%',
-    height: 2,
-    opacity: 0.8,
-  },
-  scannedIndicator: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  instructionsContainer: {
-    position: 'absolute',
-    bottom: 100,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  instructions: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: 8,
-  },
-  detailsContainer: {
-    padding: 16,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-});

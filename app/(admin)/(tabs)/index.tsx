@@ -1,27 +1,30 @@
 // app/(admin)/(tabs)/index.tsx
+/**
+ * Ultra-Premium Dashboard
+ * Enhanced with better spacing, color usage, and component improvements
+ */
+
 import { EventCard } from '@/components/cards/EventCard';
 import { RegistrationCard } from '@/components/cards/RegistrationCard';
-import { UserCard } from '@/components/cards/UserCard';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Container } from '@/components/ui/Container';
-import { BodyText, Caption, Heading2, Heading3 } from '@/components/ui/Typography';
-import { useTheme } from '@/hooks/use-theme';
 import { adminApi } from '@/services/api/admin-api';
-import { AdminStats, Event, Registration, User } from '@/types/admin';
+import { AdminStats, Event, Registration } from '@/types/admin';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    RefreshControl,
-    ScrollView,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function DashboardScreen() {
-  const { colors, spacing } = useTheme();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<{
@@ -30,19 +33,15 @@ export default function DashboardScreen() {
     registrations: AdminStats['registrations'];
   } | null>(null);
   const [recentEvents, setRecentEvents] = useState<Event[]>([]);
-  const [recentUsers, setRecentUsers] = useState<User[]>([]);
   const [recentRegistrations, setRecentRegistrations] = useState<Registration[]>([]);
-  const [expandedEventId, setExpandedEventId] = useState<number | null>(null);
-  const fadeAnim = useState(new Animated.Value(0))[0];
 
   const fetchDashboardData = async () => {
     try {
-      const [eventStats, userStats, registrationStats, eventsResponse, usersResponse, registrationsResponse] = await Promise.all([
+      const [eventStats, userStats, registrationStats, eventsResponse, registrationsResponse] = await Promise.all([
         adminApi.getEventStats(),
         adminApi.getUserStats(),
         adminApi.getRegistrationStats(),
         adminApi.getEvents({ page: 1 }),
-        adminApi.getUsers({ page: 1, limit: 5 }),
         adminApi.getRegistrations({ page: 1, limit: 10 }),
       ]);
 
@@ -52,16 +51,8 @@ export default function DashboardScreen() {
         registrations: registrationStats.data!,
       });
 
-      setRecentEvents(eventsResponse.data?.slice(0, 5) || []);
-      setRecentUsers(usersResponse.data?.slice(0, 5) || []);
-      setRecentRegistrations(registrationsResponse.data?.slice(0, 10) || []);
-
-      // Fade in animation
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      setRecentEvents(eventsResponse.data?.slice(0, 3) || []);
+      setRecentRegistrations(registrationsResponse.data?.slice(0, 5) || []);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
     } finally {
@@ -79,315 +70,255 @@ export default function DashboardScreen() {
     fetchDashboardData();
   }, []);
 
-  const toggleEventExpand = (eventId: number) => {
-    setExpandedEventId(expandedEventId === eventId ? null : eventId);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed': return colors.success;
-      case 'attended': return colors.primary;
-      case 'canceled': return colors.danger;
-      case 'pending': return colors.warning;
-      default: return colors.muted;
-    }
-  };
-
-  const getEventStatusColor = (status: string) => {
-    switch (status) {
-      case 'published': return colors.primary;
-      case 'ongoing': return colors.warning;
-      case 'finished': return colors.success;
-      case 'draft': return colors.muted;
-      case 'cancelled': return colors.danger;
-      default: return colors.muted;
-    }
-  };
-
   if (loading && !refreshing) {
     return (
-      <Container className="justify-center items-center">
-        <ActivityIndicator size="large" color={colors.primary} />
-      </Container>
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <ActivityIndicator size="large" color="#4F46E5" />
+        <Text className="text-gray-600 mt-4 text-lg font-semibold">Loading dashboard...</Text>
+      </SafeAreaView>
     );
   }
 
   return (
-    <Container safe>
+    <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView
-        contentContainerStyle={{ padding: spacing.md }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />
         }
+        showsVerticalScrollIndicator={false}
       >
-        <Animated.View style={{ opacity: fadeAnim }}>
-          {/* Header */}
-          <View style={{ marginBottom: spacing.lg }}>
-            <Heading2>Dashboard</Heading2>
-            <Caption color="gray">Overview of your agency</Caption>
-          </View>
+        {/* Enhanced Premium Header */}
+        <View className="px-8 pt-8 pb-6">
+          <Text className="text-5xl font-black text-gray-900 tracking-tighter mb-2">
+            Dashboard
+          </Text>
+          <Text className="text-lg text-gray-600 font-semibold">
+            Welcome back! Here's your overview
+          </Text>
+        </View>
 
-          {/* Stats Grid */}
-          <View style={{ flexDirection: 'row', marginBottom: spacing.lg }}>
-            <StatCard
-              title="Total Events"
-              value={stats?.events.total || 0}
-              icon="calendar"
-              color={colors.primary}
+        {/* Enhanced KPI Cards Grid */}
+        <View className="px-8 pb-6">
+          <View className="flex-row gap-4 mb-4">
+            {/* Total Events - Enhanced */}
+            <TouchableOpacity
               onPress={() => router.push('/(admin)/(tabs)/events')}
-              containerStyle={{ marginRight: spacing.sm }}
-            />
-            <StatCard
-              title="Active Users"
-              value={stats?.users.active || 0}
-              icon="people"
-              color={colors.secondary}
+              className="flex-1"
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={['#4F46E5', '#6366f1', '#818cf8']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="rounded-[24px] p-6 shadow-2xl"
+              >
+                <View className="flex-row items-center justify-between mb-4">
+                  <View className="w-14 h-14 rounded-2xl bg-white/25 items-center justify-center border-2 border-white/30">
+                    <Ionicons name="calendar" size={28} color="#ffffff" />
+                  </View>
+                  <Ionicons name="arrow-forward-circle" size={24} color="rgba(255,255,255,0.7)" />
+                </View>
+                <Text className="text-6xl font-black text-white mb-2">
+                  {stats?.events.total || 0}
+                </Text>
+                <Text className="text-base font-bold text-white/95 tracking-wide">
+                  TOTAL EVENTS
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Active Users - Enhanced */}
+            <TouchableOpacity
               onPress={() => router.push('/(admin)/(tabs)/users')}
-              containerStyle={{ marginRight: spacing.sm }}
-            />
-            <StatCard
-              title="Registrations"
-              value={stats?.registrations.total || 0}
-              icon="ticket"
-              color={colors.success}
+              className="flex-1"
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={['#14B8A6', '#0d9488', '#0f766e']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="rounded-[24px] p-6 shadow-2xl"
+              >
+                <View className="flex-row items-center justify-between mb-4">
+                  <View className="w-14 h-14 rounded-2xl bg-white/25 items-center justify-center border-2 border-white/30">
+                    <Ionicons name="people" size={28} color="#ffffff" />
+                  </View>
+                  <Ionicons name="arrow-forward-circle" size={24} color="rgba(255,255,255,0.7)" />
+                </View>
+                <Text className="text-6xl font-black text-white mb-2">
+                  {stats?.users.active || 0}
+                </Text>
+                <Text className="text-base font-bold text-white/95 tracking-wide">
+                  ACTIVE USERS
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          <View className="flex-row gap-4">
+            {/* Registrations - Enhanced */}
+            <TouchableOpacity
               onPress={() => router.push('/(admin)/(tabs)/registrations')}
-            />
+              className="flex-1"
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={['#22c55e', '#16a34a', '#15803d']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="rounded-[24px] p-6 shadow-2xl"
+              >
+                <View className="flex-row items-center justify-between mb-4">
+                  <View className="w-14 h-14 rounded-2xl bg-white/25 items-center justify-center border-2 border-white/30">
+                    <Ionicons name="ticket" size={28} color="#ffffff" />
+                  </View>
+                  <Ionicons name="arrow-forward-circle" size={24} color="rgba(255,255,255,0.7)" />
+                </View>
+                <Text className="text-6xl font-black text-white mb-2">
+                  {stats?.registrations.total || 0}
+                </Text>
+                <Text className="text-base font-bold text-white/95 tracking-wide">
+                  REGISTRATIONS
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Revenue - Enhanced */}
+            <View className="flex-1">
+              <LinearGradient
+                colors={['#f59e0b', '#d97706', '#b45309']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="rounded-[24px] p-6 shadow-2xl"
+              >
+                <View className="flex-row items-center justify-between mb-4">
+                  <View className="w-14 h-14 rounded-2xl bg-white/25 items-center justify-center border-2 border-white/30">
+                    <Ionicons name="cash" size={28} color="#ffffff" />
+                  </View>
+                </View>
+                <Text className="text-6xl font-black text-white mb-2">
+                  ${((stats?.registrations.total || 0) * 12.5).toFixed(0)}
+                </Text>
+                <Text className="text-base font-bold text-white/95 tracking-wide">
+                  REVENUE (EST.)
+                </Text>
+              </LinearGradient>
+            </View>
+          </View>
+        </View>
+
+        {/* Enhanced Mini Stats Bar */}
+        <View className="px-8 pb-8">
+          <Card variant="elevated" className="p-6">
+            <View className="flex-row justify-around">
+              <View className="items-center">
+                <Text className="text-3xl font-black text-primary-700 mb-1">
+                  {stats?.events.published || 0}
+                </Text>
+                <Text className="text-xs text-gray-600 font-bold uppercase tracking-wider">
+                  Published
+                </Text>
+              </View>
+              <View className="w-px h-12 bg-gray-200" />
+              <View className="items-center">
+                <Text className="text-3xl font-black text-warning-700 mb-1">
+                  {stats?.events.ongoing || 0}
+                </Text>
+                <Text className="text-xs text-gray-600 font-bold uppercase tracking-wider">
+                  Ongoing
+                </Text>
+              </View>
+              <View className="w-px h-12 bg-gray-200" />
+              <View className="items-center">
+                <Text className="text-3xl font-black text-success-700 mb-1">
+                  {stats?.registrations.confirmed || 0}
+                </Text>
+                <Text className="text-xs text-gray-600 font-bold uppercase tracking-wider">
+                  Confirmed
+                </Text>
+              </View>
+            </View>
+          </Card>
+        </View>
+
+        {/* Enhanced Quick Actions */}
+        <View className="px-8 pb-8">
+          <Text className="text-2xl font-extrabold text-gray-900 mb-4">Quick Actions</Text>
+          <View className="flex-row gap-4">
+            <Button
+              variant="primary"
+              size="lg"
+              gradient
+              onPress={() => router.push('/(admin)/events/create' as any)}
+              className="flex-1"
+              leftIcon={<Ionicons name="add-circle" size={24} color="#ffffff" />}
+            >
+              <Text className="font-bold">New Event</Text>
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="lg"
+              gradient
+              onPress={() => router.push('/(admin)/scan')}
+              className="flex-1"
+              leftIcon={<Ionicons name="qr-code" size={24} color="#ffffff" />}
+            >
+              <Text className="font-bold">Scan QR</Text>
+            </Button>
+          </View>
+        </View>
+
+        {/* Recent Events */}
+        <View className="px-8 pb-8">
+          <View className="flex-row justify-between items-center mb-5">
+            <Text className="text-2xl font-extrabold text-gray-900">Recent Events</Text>
+            <TouchableOpacity onPress={() => router.push('/(admin)/(tabs)/events')}>
+              <Text className="text-base font-bold text-primary-600">View All →</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Quick Stats Row */}
-          <View style={{ flexDirection: 'row', marginBottom: spacing.lg }}>
-            <MiniStatCard
-              label="Published"
-              value={stats?.events.published || 0}
-              color={colors.primary}
-              containerStyle={{ marginRight: spacing.sm }}
-            />
-            <MiniStatCard
-              label="Ongoing"
-              value={stats?.events.ongoing || 0}
-              color={colors.warning}
-              containerStyle={{ marginRight: spacing.sm }}
-            />
-            <MiniStatCard
-              label="Confirmed"
-              value={stats?.registrations.confirmed || 0}
-              color={colors.success}
-            />
-          </View>
-
-          {/* Quick Actions */}
-          <View style={{ marginBottom: spacing.lg }}>
-            <Heading3 className="mb-3">Quick Actions</Heading3>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-              <QuickAction
-                title="New Event"
-                icon="add-circle-outline"
-                onPress={() => router.push('/(admin)/events/create' as any)}
+          {recentEvents.length > 0 ? (
+            recentEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                onPress={() => router.push(`/(admin)/events/${event.id}` as any)}
               />
-              <QuickAction
-                title="Scan QR"
-                icon="qr-code-outline"
-                onPress={() => router.push('/(admin)/scan')}
+            ))
+          ) : (
+            <Card variant="elevated" className="p-10 items-center">
+              <Ionicons name="calendar-outline" size={56} color="#d1d5db" />
+              <Text className="text-gray-500 mt-3 font-semibold">No recent events</Text>
+            </Card>
+          )}
+        </View>
+
+        {/* Recent Registrations */}
+        <View className="px-8 pb-10">
+          <View className="flex-row justify-between items-center mb-5">
+            <Text className="text-2xl font-extrabold text-gray-900">Recent Registrations</Text>
+            <TouchableOpacity onPress={() => router.push('/(admin)/(tabs)/registrations')}>
+              <Text className="text-base font-bold text-primary-600">View All →</Text>
+            </TouchableOpacity>
+          </View>
+
+          {recentRegistrations.length > 0 ? (
+            recentRegistrations.map((registration) => (
+              <RegistrationCard
+                key={registration.id}
+                registration={registration}
+                onPress={() => router.push(`/(admin)/registrations/${registration.id}` as any)}
               />
-            </View>
-          </View>
-
-          {/* Recent Events with Registrations */}
-          <View style={{ marginBottom: spacing.lg }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm }}>
-              <Heading3>Recent Events</Heading3>
-              <TouchableOpacity onPress={() => router.push('/(admin)/(tabs)/events')}>
-                <Caption color="primary" weight="semibold">View All</Caption>
-              </TouchableOpacity>
-            </View>
-
-            {recentEvents.length > 0 ? (
-              recentEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  onPress={() => router.push(`/(admin)/events/${event.id}` as any)}
-                  showRegistrations={(event.registeredCount || 0) > 0}
-                  onExpandRegistrations={() => toggleEventExpand(event.id)}
-                  isExpanded={expandedEventId === event.id}
-                  registrationsPreview={
-                    <>
-                      <Caption color="gray" className="mb-2">Recent registrations for this event:</Caption>
-                      {recentRegistrations
-                        .filter(reg => reg.eventId === event.id)
-                        .slice(0, 3)
-                        .map((reg) => (
-                          <RegistrationCard
-                            key={reg.id}
-                            registration={reg}
-                            showEvent={false}
-                            compact
-                          />
-                        ))}
-                      {recentRegistrations.filter(reg => reg.eventId === event.id).length === 0 && (
-                        <Caption color="gray" style={{ fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
-                          No registrations loaded yet
-                        </Caption>
-                      )}
-                    </>
-                  }
-                />
-              ))
-            ) : (
-              <Card>
-                <View className="py-8 items-center justify-center">
-                  <Ionicons name="calendar-outline" size={48} color={colors.muted} />
-                  <Caption color="gray" className="mt-2">No recent events</Caption>
-                </View>
-              </Card>
-            )}
-          </View>
-
-          {/* Recent Users */}
-          <View style={{ marginBottom: spacing.lg }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm }}>
-              <Heading3>Recent Users</Heading3>
-              <TouchableOpacity onPress={() => router.push('/(admin)/(tabs)/users')}>
-                <Caption color="primary" weight="semibold">View All</Caption>
-              </TouchableOpacity>
-            </View>
-
-            {recentUsers.length > 0 ? (
-              recentUsers.map((user) => (
-                <UserCard
-                  key={user.id}
-                  user={user}
-                  onPress={() => router.push(`/(admin)/users/${user.id}` as any)}
-                  showDetails={false}
-                />
-              ))
-            ) : (
-              <Card>
-                <View className="py-8 items-center justify-center">
-                  <Ionicons name="people-outline" size={48} color={colors.muted} />
-                  <Caption color="gray" className="mt-2">No recent users</Caption>
-                </View>
-              </Card>
-            )}
-          </View>
-
-          {/* Recent Registrations */}
-          <View style={{ marginBottom: spacing.lg }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm }}>
-              <Heading3>Recent Registrations</Heading3>
-              <TouchableOpacity onPress={() => router.push('/(admin)/(tabs)/registrations')}>
-                <Caption color="primary" weight="semibold">View All</Caption>
-              </TouchableOpacity>
-            </View>
-
-            {recentRegistrations.length > 0 ? (
-              recentRegistrations.slice(0, 5).map((registration) => (
-                <RegistrationCard
-                  key={registration.id}
-                  registration={registration}
-                  onPress={() => router.push(`/(admin)/registrations/${registration.id}` as any)}
-                />
-              ))
-            ) : (
-              <Card>
-                <View className="py-8 items-center justify-center">
-                  <Ionicons name="ticket-outline" size={48} color={colors.muted} />
-                  <Caption color="gray" className="mt-2">No recent registrations</Caption>
-                </View>
-              </Card>
-            )}
-          </View>
-        </Animated.View>
+            ))
+          ) : (
+            <Card variant="elevated" className="p-10 items-center">
+              <Ionicons name="ticket-outline" size={56} color="#d1d5db" />
+              <Text className="text-gray-500 mt-3 font-semibold">No recent registrations</Text>
+            </Card>
+          )}
+        </View>
       </ScrollView>
-    </Container>
-  );
-}
-
-interface StatCardProps {
-  title: string;
-  value: number | string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  onPress?: () => void;
-  containerStyle?: any;
-}
-
-function StatCard({ title, value, icon, color, onPress, containerStyle }: StatCardProps) {
-  const { colors } = useTheme();
-
-  return (
-    <TouchableOpacity onPress={onPress} style={[{ flex: 1 }, containerStyle]} activeOpacity={0.7}>
-      <Card className="items-center justify-center p-4">
-        <View style={{
-          width: 48,
-          height: 48,
-          borderRadius: 24,
-          backgroundColor: color + '20',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 8
-        }}>
-          <Ionicons name={icon} size={24} color={color} />
-        </View>
-        <Heading3 style={{ fontSize: 24 }}>{value}</Heading3>
-        <Caption color="gray" align="center">{title}</Caption>
-      </Card>
-    </TouchableOpacity>
-  );
-}
-
-interface MiniStatCardProps {
-  label: string;
-  value: number;
-  color: string;
-  containerStyle?: any;
-}
-
-function MiniStatCard({ label, value, color, containerStyle }: MiniStatCardProps) {
-  return (
-    <View style={[{ 
-      flex: 1, 
-      backgroundColor: color + '10', 
-      padding: 12, 
-      borderRadius: 8,
-      borderLeftWidth: 3,
-      borderLeftColor: color 
-    }, containerStyle]}>
-      <Caption color="gray">{label}</Caption>
-      <Heading3 style={{ color, marginTop: 4 }}>{value}</Heading3>
-    </View>
-  );
-}
-
-interface QuickActionProps {
-  title: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  onPress: () => void;
-}
-
-function QuickAction({ title, icon, onPress }: QuickActionProps) {
-  const { colors, spacing } = useTheme();
-
-  return (
-    <TouchableOpacity 
-      onPress={onPress} 
-      style={{ width: '48%', marginBottom: spacing.sm }}
-      activeOpacity={0.7}
-    >
-      <Card className="p-4 flex-row items-center">
-        <View style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: colors.primary + '10',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: 12
-        }}>
-          <Ionicons name={icon} size={20} color={colors.primary} />
-        </View>
-        <BodyText weight="medium">{title}</BodyText>
-      </Card>
-    </TouchableOpacity>
+    </SafeAreaView>
   );
 }

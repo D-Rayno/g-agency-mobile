@@ -1,33 +1,40 @@
-// components/date.tsx
+// components/form/DateInput.tsx
+/**
+ * Ultra-Premium Date Input Component
+ * Enhanced with better styling and visual feedback
+ */
 
-import { useTheme } from "@/hooks/use-theme";
-import type { BaseInputProps } from "@/types/form";
-import { dateSchema, dateSchemaDetailed, requiredDateSchema } from "@/validations/date";
-import { memo, useCallback, useMemo } from "react";
-import { Controller } from "react-hook-form";
-import { StyleSheet, Text, View } from "react-native";
-import MaskInput from "react-native-mask-input";
+import type { BaseInputProps } from '@/types/form';
+import { cn } from '@/utils/cn';
+import {
+  dateSchema,
+  dateSchemaDetailed,
+  requiredDateSchema,
+} from '@/validations/date';
+import { Ionicons } from '@expo/vector-icons';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { Controller } from 'react-hook-form';
+import { Animated, Text, View } from 'react-native';
+import MaskInput from 'react-native-mask-input';
 import * as yup from 'yup';
 
-// Mask with ranges for days (01–31) and months (01–12)
 const DATE_MASK = [
   /\d/,
   /\d/,
-  "/", // DD
+  '/',
   /\d/,
   /\d/,
-  "/", // MM
+  '/',
   /\d/,
   /\d/,
   /\d/,
-  /\d/, // YYYY
+  /\d/,
 ];
 
 interface DateInputProps extends BaseInputProps {
   validationType?: 'optional' | 'required' | 'detailed';
 }
 
-// CRITICAL: Stable MaskInput component to prevent recreation
 const StableMaskInput = memo(
   ({
     value,
@@ -35,7 +42,9 @@ const StableMaskInput = memo(
     placeholder,
     placeholderTextColor,
     keyboardType,
-    style,
+    className,
+    onFocus,
+    onBlur,
     ...restProps
   }: any) => {
     return (
@@ -46,14 +55,16 @@ const StableMaskInput = memo(
         placeholder={placeholder}
         placeholderTextColor={placeholderTextColor}
         keyboardType={keyboardType}
-        style={style}
+        className={className}
+        onFocus={onFocus}
+        onBlur={onBlur}
         {...restProps}
       />
     );
   }
 );
 
-StableMaskInput.displayName = "StableMaskInput";
+StableMaskInput.displayName = 'StableMaskInput';
 
 export const DateInput = memo(
   ({
@@ -67,9 +78,9 @@ export const DateInput = memo(
     required,
     validationType = 'optional',
   }: DateInputProps) => {
-    const { colors, typography } = useTheme();
+    const [isFocused, setIsFocused] = useState(false);
+    const [scaleAnim] = useState(new Animated.Value(1));
 
-    // Get appropriate validation schema based on type
     const validationSchema = useMemo(() => {
       switch (validationType) {
         case 'required':
@@ -82,7 +93,6 @@ export const DateInput = memo(
       }
     }, [validationType]);
 
-    // Merge custom rules with validation schema
     const mergedRules = useMemo(() => {
       const schemaValidation = {
         validate: async (value: string) => {
@@ -101,74 +111,37 @@ export const DateInput = memo(
       return {
         ...rules,
         ...schemaValidation,
-        // If required is explicitly set, add required validation
         ...(required && {
-          required: rules.required || 'This field is required'
+          required: rules.required || 'This field is required',
         }),
       };
     }, [rules, validationSchema, required]);
 
-    // CRITICAL: Create stable styles with useMemo
-    const styles = useMemo(
-      () =>
-        StyleSheet.create({
-          label: {
-            marginBottom: 6,
-            fontSize: typography.body.fontSize,
-            fontWeight: typography.body.fontWeight,
-            color: colors.text,
-          },
-          inputContainer: {
-            borderWidth: 1,
-            borderColor: colors.border,
-            borderRadius: 8,
-            backgroundColor: colors.card,
-          },
-          input: {
-            color: colors.text,
-            fontSize: typography.body.fontSize,
-            paddingVertical: 10,
-            paddingHorizontal: 12,
-          },
-          helperText: {
-            fontSize: typography.caption.fontSize,
-            color: colors.muted,
-            marginTop: 4,
-          },
-          errorText: {
-            color: colors.danger,
-            fontSize: typography.caption.fontSize,
-            marginTop: 4,
-          },
-          required: {
-            color: colors.danger,
-            marginLeft: 4,
-          },
-          labelContainer: {
-            flexDirection: "row",
-            alignItems: "center",
-          },
-        }),
-      [
-        colors.text,
-        colors.border,
-        colors.card,
-        colors.muted,
-        colors.danger,
-        typography.body.fontSize,
-        typography.body.fontWeight,
-        typography.caption.fontSize,
-      ]
-    );
+    const handleFocus = () => {
+      setIsFocused(true);
+      Animated.spring(scaleAnim, {
+        toValue: 1.02,
+        useNativeDriver: true,
+        speed: 50,
+      }).start();
+    };
 
-    // CRITICAL: Stable render function with minimal dependencies
+    const handleBlur = () => {
+      setIsFocused(false);
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 50,
+      }).start();
+    };
+
     const renderInput = useCallback(
       ({ field: { onChange, value }, fieldState: { error } }: any) => {
-        const displayValue = value ? value.split("-").reverse().join("/") : "";
+        const displayValue = value ? value.split('-').reverse().join('/') : '';
 
         const handleChange = (masked: string) => {
           if (masked.length === 10) {
-            const [day, month, year] = masked.split("/");
+            const [day, month, year] = masked.split('/');
             const date = `${year}-${month}-${day}`;
             onChange(date);
           } else {
@@ -178,46 +151,66 @@ export const DateInput = memo(
 
         return (
           <View style={containerStyle}>
+            {/* Enhanced Label */}
             {label && (
-              <View style={styles.labelContainer}>
-                <Text style={[styles.label, labelStyle]}>{label}</Text>
-                {required && <Text style={styles.required}>*</Text>}
+              <View className="flex-row items-center mb-3">
+                <Text className={cn('text-sm font-black text-gray-700 uppercase tracking-widest', labelStyle)}>
+                  {label}
+                </Text>
+                {required && <Text className="text-error-600 ml-1">*</Text>}
               </View>
             )}
 
-            <View
-              style={[
-                styles.inputContainer,
-                error && { borderColor: colors.danger },
-              ]}
+            {/* Enhanced Input Container */}
+            <Animated.View
+              style={{ transform: [{ scale: scaleAnim }] }}
+              className={cn(
+                'flex-row items-center border-[3px] rounded-2xl bg-gray-50 px-5 shadow-sm',
+                isFocused && !error ? 'border-primary-500 bg-primary-50/30 shadow-xl shadow-primary-500/20' : 'border-gray-200',
+                error && 'border-error-500 bg-error-50/30 shadow-xl shadow-error-500/20'
+              )}
             >
+              {/* Calendar Icon */}
+              <View className="mr-4">
+                <Ionicons 
+                  name="calendar" 
+                  size={24} 
+                  color={isFocused ? '#4F46E5' : '#6b7280'} 
+                />
+              </View>
+
               <StableMaskInput
                 value={displayValue}
                 onChangeText={handleChange}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
                 placeholder="DD/MM/YYYY"
-                placeholderTextColor={colors.muted}
+                placeholderTextColor="#9CA3AF"
                 keyboardType="numeric"
-                style={styles.input}
+                className="flex-1 text-gray-900 text-lg py-5 font-semibold"
               />
-            </View>
+            </Animated.View>
 
-            {error && <Text style={styles.errorText}>{error.message}</Text>}
+            {/* Enhanced Error Display */}
+            {error && (
+              <View className="flex-row items-center mt-3 bg-error-50 px-4 py-3 rounded-xl border-2 border-error-200">
+                <Ionicons name="alert-circle" size={18} color="#ef4444" />
+                <Text className="text-sm text-error-700 ml-2 font-bold flex-1">
+                  {error.message}
+                </Text>
+              </View>
+            )}
+
+            {/* Helper Text */}
             {!error && helperText && (
-              <Text style={styles.helperText}>{helperText}</Text>
+              <Text className="text-sm text-gray-600 mt-2 font-medium">
+                {helperText}
+              </Text>
             )}
           </View>
         );
       },
-      [
-        containerStyle,
-        label,
-        styles,
-        labelStyle,
-        required,
-        colors.danger,
-        colors.muted,
-        helperText,
-      ]
+      [containerStyle, label, labelStyle, required, helperText, isFocused]
     );
 
     return (
@@ -231,6 +224,6 @@ export const DateInput = memo(
   }
 );
 
-DateInput.displayName = "DateInput";
+DateInput.displayName = 'DateInput';
 
 export default DateInput;

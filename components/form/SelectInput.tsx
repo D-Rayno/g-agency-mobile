@@ -1,21 +1,25 @@
-// components/SelectInput.tsx
-import { useTheme } from "@/hooks/use-theme";
-import { Ionicons } from "@expo/vector-icons";
-import type { FC } from "react";
-import { useEffect, useRef, useState } from "react";
-import { Controller } from "react-hook-form";
+// components/form/SelectInput.tsx
+/**
+ * Select Input Component with Modal Dropdown
+ * Pure NativeWind styling - no theme hooks
+ */
+
+import { cn } from '@/utils/cn';
+import { Ionicons } from '@expo/vector-icons';
+import type { FC } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Controller } from 'react-hook-form';
 import {
     Animated,
     Dimensions,
     Easing,
     Modal,
     ScrollView,
-    StyleSheet,
     Text,
     TouchableOpacity,
     TouchableWithoutFeedback,
     View,
-} from "react-native";
+} from 'react-native';
 
 type Option = {
   label: string;
@@ -57,7 +61,6 @@ export const SelectInput: FC<SelectInputProps> = ({
   options,
   maxDropdownHeight = 200,
 }) => {
-  const { colors, typography, spacing } = useTheme();
   const [open, setOpen] = useState(false);
   const [inputLayout, setInputLayout] = useState({
     x: 0,
@@ -71,81 +74,13 @@ export const SelectInput: FC<SelectInputProps> = ({
   const translateYAnim = useRef(new Animated.Value(-10)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
-  const styles = StyleSheet.create({
-    label: {
-      marginBottom: spacing.xs,
-      fontSize: typography.body.fontSize,
-      fontWeight: typography.body.fontWeight,
-      color: colors.text,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      paddingVertical: 10,
-      paddingHorizontal: 12,
-      fontSize: typography.body.fontSize,
-      color: colors.text,
-      backgroundColor: colors.card,
-      minHeight: 40,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    errorInput: {
-      borderColor: colors.danger,
-    },
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'transparent',
-    },
-    dropdown: {
-      position: 'absolute',
-      backgroundColor: colors.card,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      overflow: "hidden",
-      shadowColor: "#000",
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5,
-    },
-    dropdownItem: {
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    dropdownText: {
-      fontSize: typography.body.fontSize,
-      color: colors.text,
-    },
-    helperText: {
-      fontSize: typography.caption.fontSize,
-      color: colors.muted,
-      marginTop: 4,
-    },
-    errorText: {
-      color: colors.danger,
-      marginTop: 4,
-      fontSize: typography.caption.fontSize,
-    },
-    required: {
-      color: colors.danger,
-      marginLeft: 4,
-    },
-  });
-
   const measureInput = () => {
     if (inputRef.current) {
-      inputRef.current.measureInWindow((x:number, y:number, width:number, height:number) => {
-        setInputLayout({ x, y, width, height });
-      });
+      inputRef.current.measureInWindow(
+        (x: number, y: number, width: number, height: number) => {
+          setInputLayout({ x, y, width, height });
+        }
+      );
     }
   };
 
@@ -202,25 +137,22 @@ export const SelectInput: FC<SelectInputProps> = ({
 
   const rotateInterpolate = rotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ["0deg", "180deg"],
+    outputRange: ['0deg', '180deg'],
   });
 
   // Calculate dropdown position
   const getDropdownStyle = () => {
     const dropdownTop = inputLayout.y + inputLayout.height + 4;
     const dropdownBottom = screenHeight - inputLayout.y + 4;
-    
+
     // Check if dropdown should appear above or below the input
     const showAbove = dropdownTop + maxDropdownHeight > screenHeight - 50;
-    
+
     return {
       left: inputLayout.x,
       width: inputLayout.width,
       maxHeight: maxDropdownHeight,
-      ...(showAbove 
-        ? { bottom: dropdownBottom } 
-        : { top: dropdownTop }
-      ),
+      ...(showAbove ? { bottom: dropdownBottom } : { top: dropdownTop }),
     };
   };
 
@@ -231,41 +163,46 @@ export const SelectInput: FC<SelectInputProps> = ({
       rules={rules}
       render={({ field: { onChange, value }, fieldState: { error } }) => (
         <View style={containerStyle}>
+          {/* Label */}
           {label && (
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text style={[styles.label, labelStyle]}>{label}</Text>
-              {required && <Text style={styles.required}>*</Text>}
+            <View className="flex-row items-center">
+              <Text
+                className={cn('text-base font-normal text-gray-800 mb-1', labelStyle)}
+              >
+                {label}
+              </Text>
+              {required && <Text className="text-error-600 ml-1">*</Text>}
             </View>
           )}
 
+          {/* Input Trigger */}
           <TouchableOpacity
             ref={inputRef}
             onPress={handleOpen}
-            style={[styles.input, error && styles.errorInput, inputStyle]}
+            className={cn(
+              'border border-gray-300 rounded-lg py-2.5 px-3 bg-white min-h-[40px] flex-row items-center justify-between',
+              error && 'border-error-600',
+              inputStyle
+            )}
             activeOpacity={0.7}
           >
-            <View style={{ flex: 1, marginRight: 8 }}>
+            <View className="flex-1 mr-2">
               <Text
-                style={{
-                  color: value ? colors.text : colors.muted,
-                }}
+                className={cn(
+                  'text-base',
+                  value ? 'text-gray-800' : 'text-gray-400'
+                )}
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
                 {value
                   ? options.find((opt) => opt.value === value)?.label
-                  : placeholder || "Select an option"}
+                  : placeholder || 'Select an option'}
               </Text>
             </View>
 
-            <Animated.View
-              style={{ transform: [{ rotate: rotateInterpolate }] }}
-            >
-              <Ionicons
-                name="chevron-down"
-                size={20}
-                color={colors.muted}
-              />
+            <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+              <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
             </Animated.View>
           </TouchableOpacity>
 
@@ -277,10 +214,10 @@ export const SelectInput: FC<SelectInputProps> = ({
             onRequestClose={handleClose}
           >
             <TouchableWithoutFeedback onPress={handleClose}>
-              <View style={styles.modalOverlay}>
+              <View className="flex-1 bg-transparent">
                 <Animated.View
+                  className="absolute bg-white border border-gray-300 rounded-lg overflow-hidden shadow-lg"
                   style={[
-                    styles.dropdown,
                     getDropdownStyle(),
                     {
                       opacity: opacityAnim,
@@ -288,24 +225,20 @@ export const SelectInput: FC<SelectInputProps> = ({
                     },
                   ]}
                 >
-                  <ScrollView 
-                    nestedScrollEnabled
-                    showsVerticalScrollIndicator={false}
-                  >
+                  <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false}>
                     {options.map((item, index) => (
                       <TouchableOpacity
                         key={item.value}
-                        style={[
-                          styles.dropdownItem,
-                          // Remove border from last item
-                          index === options.length - 1 && { borderBottomWidth: 0 }
-                        ]}
+                        className={cn(
+                          'py-3 px-4 border-b border-gray-200',
+                          index === options.length - 1 && 'border-b-0'
+                        )}
                         onPress={() => {
                           onChange(item.value);
                           handleClose();
                         }}
                       >
-                        <Text style={styles.dropdownText}>{item.label}</Text>
+                        <Text className="text-base text-gray-800">{item.label}</Text>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -314,13 +247,16 @@ export const SelectInput: FC<SelectInputProps> = ({
             </TouchableWithoutFeedback>
           </Modal>
 
+          {/* Helper Text */}
           {!error && helperText && (
-            <Text style={[styles.helperText, helperTextStyle]}>
+            <Text className={cn('text-sm text-gray-500 mt-1', helperTextStyle)}>
               {helperText}
             </Text>
           )}
+
+          {/* Error Text */}
           {error && (
-            <Text style={[styles.errorText, errorTextStyle]}>
+            <Text className={cn('text-sm text-error-600 mt-1', errorTextStyle)}>
               {error.message}
             </Text>
           )}

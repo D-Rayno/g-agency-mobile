@@ -4,19 +4,19 @@
  * Import components from this file for consistent usage across the application
  */
 
-// Core Components
-export * from './Button';
-export * from './Card';
-export * from './Input';
-export * from './Typography';
-
-// Display Components
 export * from './Avatar';
 export * from './Badge';
-export * from './Divider';
-
-// Feedback Components
-export * from './Loading';
-
-// Layout Components
+export * from './Button';
+export * from './CapacityIndicator';
+export * from './Card';
 export * from './Container';
+export * from './DateRangeDisplay';
+export * from './Divider';
+export * from './EmptyState';
+export * from './FilterChip';
+export * from './Input';
+export * from './Loading';
+export * from './SearchBar';
+export * from './StatusBadge';
+export * from './Typography';
+

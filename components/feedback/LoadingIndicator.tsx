@@ -1,19 +1,16 @@
-import { useTheme } from "@/hooks/use-theme";
-import { ActivityIndicator, Text, View } from "react-native";
+// components/feedback/LoadingIndicator.tsx
+/**
+ * Loading Indicator Component
+ * Pure NativeWind styling - no theme hooks
+ */
+
+import { ActivityIndicator, Text, View } from 'react-native';
 
 export default ({ message }: { message: string }) => {
-  const { colors } = useTheme();
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: colors.background,
-      }}
-    >
-      <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={{ color: colors.text, marginTop: 16 }}>{message}</Text>
+    <View className="flex-1 justify-center items-center bg-background">
+      <ActivityIndicator size="large" color="#4F46E5" />
+      <Text className="text-gray-800 mt-4">{message}</Text>
     </View>
   );
 };

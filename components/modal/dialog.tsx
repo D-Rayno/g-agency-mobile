@@ -1,26 +1,29 @@
+// components/modal/dialog.tsx
+/**
+ * Dialog/Modal Component with Bottom Sheet Animation
+ * Pure NativeWind styling - no theme hooks
+ */
 
-import { useTheme } from "@/hooks/use-theme";
-import { useEffect, useRef, type FC, type ReactNode } from "react";
+import { useEffect, useRef, type FC, type ReactNode } from 'react';
 import {
-  Animated,
-  Dimensions,
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
+    Animated,
+    Dimensions,
+    Modal,
+    Text,
+    TouchableWithoutFeedback,
+    View,
+} from 'react-native';
 
-const { height } = Dimensions.get("window");
+const { height } = Dimensions.get('window');
 
 interface DialogProps {
   visible: boolean;
   onClose: () => void;
   title?: string;
-  children?: ReactNode; // main content slot
-  footer?: ReactNode; // buttons/actions slot
-  position?: "bottom" | "center"; // NEW
-  dismissOnOverlayPress?: boolean; // NEW
+  children?: ReactNode;
+  footer?: ReactNode;
+  position?: 'bottom' | 'center';
+  dismissOnOverlayPress?: boolean;
 }
 
 export const Dialog: FC<DialogProps> = ({
@@ -29,14 +32,11 @@ export const Dialog: FC<DialogProps> = ({
   title,
   children,
   footer,
-  position = "bottom",
+  position = 'bottom',
   dismissOnOverlayPress = true,
 }) => {
   const slideAnim = useRef(new Animated.Value(height)).current;
-  const { colors, spacing } = useTheme();
 
-
-  // Animate modal slide
   useEffect(() => {
     if (visible) {
       Animated.timing(slideAnim, {
@@ -51,7 +51,7 @@ export const Dialog: FC<DialogProps> = ({
         useNativeDriver: true,
       }).start();
     }
-  }, [visible]);
+  }, [visible, slideAnim]);
 
   return (
     <Modal
@@ -61,41 +61,40 @@ export const Dialog: FC<DialogProps> = ({
       onRequestClose={onClose}
     >
       {/* Overlay */}
-      <TouchableWithoutFeedback
-        onPress={dismissOnOverlayPress ? onClose : undefined}
-      >
-        <View style={[styles.overlay, { backgroundColor: "rgba(0,0,0,0.5)" }]}>
+      <TouchableWithoutFeedback onPress={dismissOnOverlayPress ? onClose : undefined}>
+        <View className="flex-1 justify-end bg-black/50">
           {/* Stop touches from propagating */}
           <TouchableWithoutFeedback>
             <Animated.View
-              style={[
-                styles.modalContainer,
-                position === "center"
-                  ? styles.centeredContainer
-                  : { transform: [{ translateY: slideAnim }] },
-                { backgroundColor: colors.background, padding: spacing.md },
-              ]}
+              className={`bg-background p-4 min-h-[200px] ${
+                position === 'center'
+                  ? 'mx-6 rounded-2xl self-center justify-center'
+                  : 'rounded-t-2xl'
+              }`}
+              style={
+                position === 'bottom'
+                  ? { transform: [{ translateY: slideAnim }] }
+                  : undefined
+              }
               importantForAccessibility="yes"
             >
               {/* Title */}
-              {title ? (
+              {title && (
                 <Text
-                  style={[styles.title, { color: colors.text }]}
+                  className="text-lg font-bold text-gray-800 mb-3 text-center"
                   accessibilityLabel="Modal title"
                 >
                   {title}
                 </Text>
-              ) : null}
+              )}
 
               {/* Main Content */}
-              <View style={styles.content}>{children}</View>
+              <View className="flex-1">{children}</View>
 
               {/* Footer */}
-              {footer ? (
-                <View style={[styles.footer, { marginTop: spacing.md, gap: spacing.md }]}>
-                  {footer}
-                </View>
-              ) : null}
+              {footer && (
+                <View className="flex-row justify-end mt-4 gap-4">{footer}</View>
+              )}
             </Animated.View>
           </TouchableWithoutFeedback>
         </View>
@@ -103,35 +102,3 @@ export const Dialog: FC<DialogProps> = ({
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  modalContainer: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    minHeight: 200,
-  },
-  centeredContainer: {
-    marginHorizontal: 24,
-    borderRadius: 16,
-    alignSelf: "center",
-    justifyContent: "center",
-    transform: [{ translateY: 0 }], // no slide from bottom
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  content: {
-    flexGrow: 1,
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-});

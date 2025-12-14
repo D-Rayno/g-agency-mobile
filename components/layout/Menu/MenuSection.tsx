@@ -1,6 +1,11 @@
-import { useTheme } from "@/hooks/use-theme";
-import { memo, ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+// components/layout/Menu/MenuSection.tsx
+/**
+ * Menu Section Component with Optional Title
+ * Pure NativeWind styling - no theme hooks
+ */
+
+import { memo, ReactNode } from 'react';
+import { Text, View } from 'react-native';
 
 type MenuSectionProps = {
   title?: string;
@@ -8,37 +13,16 @@ type MenuSectionProps = {
 };
 
 export const MenuSection = memo(({ title, children }: MenuSectionProps) => {
-  const { colors, spacing, typography } = useTheme();
-
-  const styles = StyleSheet.create({
-    container: {
-      marginBottom: spacing.lg,
-    },
-    title: {
-      fontSize: typography.caption.fontSize,
-      fontWeight: "600",
-      color: colors.muted,
-      textTransform: "uppercase",
-      letterSpacing: 0.5,
-      marginBottom: spacing.md,
-      marginLeft: spacing.xs,
-    },
-    content: {
-      backgroundColor: colors.card,
-      borderRadius: typography.body.fontSize,
-      padding: spacing.sm,
-      gap: spacing.sm
-    },
-  });
-
   return (
-    <View style={styles.container}>
-      {title && <Text style={styles.title}>{title}</Text>}
-      <View style={styles.content}>
-        {children}
-      </View>
+    <View className="mb-6">
+      {title && (
+        <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 ml-1">
+          {title}
+        </Text>
+      )}
+      <View className="bg-white rounded-2xl p-2 gap-2">{children}</View>
     </View>
   );
 });
 
-MenuSection.displayName = "MenuSection";
+MenuSection.displayName = 'MenuSection';

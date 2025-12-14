@@ -21,7 +21,7 @@ export const Avatar = React.forwardRef<View, AvatarProps>(
       size = 'md',
       variant = 'circular',
       className,
-      fallbackBgColor = '#0ea5e9',
+      fallbackBgColor = '#4F46E5', // Primary indigo
       ...props
     },
     ref

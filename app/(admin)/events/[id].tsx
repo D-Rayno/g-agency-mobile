@@ -1,40 +1,38 @@
 // app/(admin)/events/[id].tsx
+/**
+ * Ultra-Premium Event Detail Screen
+ * Enhanced with better spacing, colors, and component usage
+ */
+
 import { RegistrationCard } from '@/components/cards';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Loading } from '@/components/ui/Loading';
-import { BodyText, Caption, Heading2, Heading3 } from '@/components/ui/Typography';
-import { useTheme } from '@/hooks/use-theme';
 import { adminApi } from '@/services/api/admin-api';
 import { Event, Registration } from '@/types/admin';
 import { getImageUrl } from '@/utils/image';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Animated,
   Image,
   RefreshControl,
   ScrollView,
-  StyleSheet,
+  Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors, spacing, radius } = useTheme();
   const [event, setEvent] = useState<Event | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingRegistrations, setLoadingRegistrations] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('');
-  const fadeAnim = useState(new Animated.Value(0))[0];
 
   const loadEvent = async (isRefresh = false) => {
     if (!id) return;
@@ -49,13 +47,6 @@ export default function EventDetailScreen() {
       
       if (eventResponse.success && eventResponse.data) {
         setEvent(eventResponse.data);
-        
-        // Fade in animation
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }).start();
       }
 
       if (registrationsResponse.success && registrationsResponse.data) {
@@ -67,7 +58,6 @@ export default function EventDetailScreen() {
     } finally {
       setLoading(false);
       setRefreshing(false);
-      setLoadingRegistrations(false);
     }
   };
 
@@ -107,350 +97,344 @@ export default function EventDetailScreen() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'draft': return colors.muted;
-      case 'published': return colors.primary;
-      case 'ongoing': return colors.warning;
-      case 'finished': return colors.success;
-      case 'cancelled': return colors.danger;
-      default: return colors.muted;
+      case 'draft': return '#6B7280';
+      case 'published': return '#4F46E5';
+      case 'ongoing': return '#f59e0b';
+      case 'finished': return '#22c55e';
+      case 'cancelled': return '#ef4444';
+      default: return '#6B7280';
+    }
+  };
+
+  const getStatusBg = (status: string) => {
+    switch (status) {
+      case 'draft': return '#F3F4F6';
+      case 'published': return '#EEF2FF';
+      case 'ongoing': return '#FEF3C7';
+      case 'finished': return '#D1FAE5';
+      case 'cancelled': return '#FEE2E2';
+      default: return '#F3F4F6';
     }
   };
 
   if (loading || !event) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <Loading />
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <ActivityIndicator size="large" color="#4F46E5" />
+        <Text className="text-gray-600 mt-4 text-lg font-semibold">Loading event...</Text>
       </SafeAreaView>
     );
   }
 
   const registrationProgress = Math.min((event.registeredCount / event.capacity) * 100, 100);
+  const filteredRegistrations = registrations.filter(r => !filterStatus || r.status === filterStatus);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+    <SafeAreaView className="flex-1 bg-gray-50">
+      {/* Enhanced Header */}
+      <View className="bg-white px-6 py-4 flex-row items-center border-b-2 border-gray-100 shadow-md">
         <TouchableOpacity 
           onPress={() => router.back()} 
-          style={styles.backButton}
+          className="w-12 h-12 justify-center items-center mr-2"
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={28} color="#111827" />
         </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <BodyText weight="semibold" numberOfLines={1}>Event Details</BodyText>
+        <View className="flex-1 mx-2">
+          <Text className="text-xl font-black text-gray-900" numberOfLines={1}>
+            Event Details
+          </Text>
         </View>
         <TouchableOpacity 
           onPress={() => router.push(`/(admin)/events/${event.id}/edit` as any)}
+          className="w-12 h-12 justify-center items-center bg-primary-50 rounded-2xl"
           activeOpacity={0.7}
         >
-          <Ionicons name="create-outline" size={24} color={colors.primary} />
+          <Ionicons name="create" size={24} color="#4F46E5" />
         </TouchableOpacity>
       </View>
 
-      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-        <ScrollView
-          style={styles.content}
-          refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
-              onRefresh={handleRefresh}
-              tintColor={colors.primary}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={handleRefresh}
+            tintColor="#4F46E5"
+          />
+        }
+      >
+        {/* Enhanced Hero Image */}
+        <View className="relative h-96">
+          {event.imageUrl ? (
+            <Image
+              source={{ uri: getImageUrl(event.imageUrl) || undefined }}
+              className="w-full h-full"
+              resizeMode="cover"
             />
-          }
-        >
-          {/* Event Image */}
-          <View style={styles.imageContainer}>
-            {event.imageUrl ? (
-              <Image
-                source={{ uri: getImageUrl(event.imageUrl) || undefined }}
-                style={styles.image}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={[styles.imagePlaceholder, { backgroundColor: colors.border }]}>
-                <MaterialIcons name="event" size={64} color={colors.muted} />
-              </View>
-            )}
-            
-            {/* Gradient Overlay */}
-            <View style={styles.imageGradient} />
-            
-            {/* Status Badge */}
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(event.status) }]}>
-              <Caption style={{ color: '#fff', fontWeight: '700', fontSize: 11 }}>
-                {event.status.toUpperCase()}
-              </Caption>
-            </View>
-            
-            {/* Featured Badge */}
+          ) : (
+            <LinearGradient
+              colors={['#4F46E5', '#6366f1', '#818cf8']}
+              className="w-full h-full justify-center items-center"
+            >
+              <MaterialIcons name="event" size={96} color="rgba(255,255,255,0.25)" />
+            </LinearGradient>
+          )}
+          
+          {/* Enhanced Dark Overlay */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.9)']}
+            className="absolute bottom-0 left-0 right-0 h-48"
+          />
+
+          {/* Enhanced Status & Featured Badges */}
+          <View className="absolute top-6 right-6 flex-row gap-3">
             {event.isFeatured && (
-              <View style={[styles.featuredBadge, { backgroundColor: colors.warning }]}>
-                <Ionicons name="star" size={14} color="#fff" />
+              <View className="w-14 h-14 bg-warning-500 rounded-2xl items-center justify-center shadow-2xl border-2 border-warning-300">
+                <Ionicons name="star" size={28} color="#ffffff" />
               </View>
             )}
+            <View 
+              className="px-6 py-3 rounded-2xl shadow-2xl border-2"
+              style={{ 
+                backgroundColor: getStatusBg(event.status),
+                borderColor: getStatusColor(event.status)
+              }}
+            >
+              <Text 
+                className="text-xs font-black uppercase tracking-widest"
+                style={{ color: getStatusColor(event.status) }}
+              >
+                {event.status}
+              </Text>
+            </View>
           </View>
 
-          {/* Content */}
-          <View style={{ padding: spacing.md }}>
-            {/* Event Name */}
-            <Heading2 className="mb-2">{event.name}</Heading2>
-            <Caption color="gray" className="mb-4">{event.category}</Caption>
+          {/* Enhanced Title Overlay */}
+          <View className="absolute bottom-0 left-0 right-0 p-8">
+            <Text className="text-4xl font-black text-white mb-3 shadow-2xl">
+              {event.name}
+            </Text>
+            <Text className="text-xl font-bold text-white/95 capitalize">
+              {event.category}
+            </Text>
+          </View>
+        </View>
 
-            {/* Quick Stats */}
-            <View style={[styles.quickStats, { marginBottom: spacing.lg }]}>
-              <View style={styles.statItem}>
-                <Ionicons name="people" size={20} color={colors.primary} style={{ marginRight: 8 }} />
-                <View>
-                  <Caption color="gray">Registered</Caption>
-                  <BodyText weight="semibold">{event.registeredCount || 0}/{event.capacity}</BodyText>
-                </View>
+        <View className="px-8 pb-10">
+          {/* Enhanced Floating Stats Card */}
+          <Card variant="premium" className="p-7 -mt-8 mb-6">
+            <View className="flex-row">
+              <View className="flex-1 items-center border-r-2 border-gray-200">
+                <Ionicons name="people" size={28} color="#4F46E5" />
+                <Text className="text-3xl font-black text-gray-900 mt-3 mb-1">
+                  {event.registeredCount || 0}
+                </Text>
+                <Text className="text-xs text-gray-600 font-bold uppercase tracking-wider">
+                  / {event.capacity} Registered
+                </Text>
               </View>
               
-              <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-              
-              <View style={styles.statItem}>
-                <Ionicons name="calendar" size={20} color={colors.secondary} style={{ marginRight: 8 }} />
-                <View>
-                  <Caption color="gray">Starts</Caption>
-                  <BodyText weight="semibold">{new Date(event.startDate).toLocaleDateString()}</BodyText>
-                </View>
+              <View className="flex-1 items-center">
+                <Ionicons name="calendar" size={28} color="#14B8A6" />
+                <Text className="text-3xl font-black text-gray-900 mt-3 mb-1">
+                  {new Date(event.startDate).getDate()}
+                </Text>
+                <Text className="text-xs text-gray-600 font-bold uppercase tracking-wider">
+                  {new Date(event.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                </Text>
               </View>
             </View>
+          </Card>
 
-            {/* Registration Progress */}
-            <Card className="mb-4 p-4">
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Caption>Registration Progress</Caption>
-                <Caption weight="semibold">{Math.round(registrationProgress)}%</Caption>
-              </View>
-              <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${registrationProgress}%`,
-                      backgroundColor: registrationProgress >= 100 ? colors.danger : colors.primary,
-                    },
-                  ]}
-                />
-              </View>
-              <Caption color="gray" className="mt-2">
-                {event.availableSeats > 0 
-                  ? `${event.availableSeats} seats available`
-                  : 'Event is full'}
-              </Caption>
+          {/* Enhanced Registration Progress */}
+          <Card variant="elevated" className="p-7 mb-6">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-sm font-black text-gray-700 uppercase tracking-widest">
+                Registration Progress
+              </Text>
+              <Text className="text-2xl font-black text-primary-600">
+                {Math.round(registrationProgress)}%
+              </Text>
+            </View>
+            <View className="h-4 bg-gray-200 rounded-full overflow-hidden">
+              <View 
+                className="h-full rounded-full"
+                style={{ 
+                  width: `${registrationProgress}%`,
+                  backgroundColor: registrationProgress >= 100 ? '#ef4444' : '#4F46E5'
+                }}
+              />
+            </View>
+            <Text className="text-base text-gray-600 mt-3 font-semibold">
+              {event.availableSeats > 0 
+                ? `${event.availableSeats} seats remaining`
+                : 'Event is full'}
+            </Text>
+          </Card>
+
+          {/* Enhanced Event Information */}
+          <Card variant="elevated" className="p-7 mb-6">
+            <Text className="text-2xl font-black text-gray-900 mb-5">Event Information</Text>
+            
+            <InfoRow icon="calendar" label="Start Date" value={new Date(event.startDate).toLocaleString()} />
+            <InfoRow icon="calendar" label="End Date" value={new Date(event.endDate).toLocaleString()} />
+            <InfoRow icon="location" label="Location" value={event.location} />
+            <InfoRow icon="map" label="Province / Commune" value={`${event.province} / ${event.commune}`} />
+          </Card>
+
+          {/* Enhanced Pricing */}
+          <Card variant="elevated" className="p-7 mb-6">
+            <Text className="text-2xl font-black text-gray-900 mb-5">Pricing</Text>
+            
+            <InfoRow icon="cash" label="Base Price" value={`${event.basePrice} DZD`} />
+            {event.youthPrice && <InfoRow icon="person" label="Youth Price (<26)" value={`${event.youthPrice} DZD`} />}
+            {event.seniorPrice && <InfoRow icon="person" label="Senior Price (≥60)" value={`${event.seniorPrice} DZD`} />}
+            <InfoRow icon="people" label="Age Range" value={`${event.minAge}${event.maxAge ? ` - ${event.maxAge}` : '+'} years`} />
+          </Card>
+
+          {/* Description */}
+          {event.description && (
+            <Card variant="elevated" className="p-7 mb-6">
+              <Text className="text-2xl font-black text-gray-900 mb-4">Description</Text>
+              <Text className="text-lg text-gray-700 leading-7 font-medium">
+                {event.description}
+              </Text>
             </Card>
+          )}
 
-            {/* Basic Info */}
-            <Card className="mb-4 p-4">
-              <Heading3 className="mb-3">Event Information</Heading3>
-              <InfoRow icon="calendar-outline" label="Start Date" value={new Date(event.startDate).toLocaleString()} />
-              <InfoRow icon="calendar-outline" label="End Date" value={new Date(event.endDate).toLocaleString()} />
-              <InfoRow icon="location-outline" label="Location" value={event.location} />
-              <InfoRow icon="location-outline" label="Province/Commune" value={`${event.province} / ${event.commune}`} />
+          {/* Game Details */}
+          {event.eventType === 'game' && (
+            <Card variant="elevated" className="p-7 mb-6">
+              <Text className="text-2xl font-black text-gray-900 mb-5">Game Details</Text>
+              
+              {event.gameType && <InfoRow icon="game-controller" label="Game Type" value={event.gameType} />}
+              {event.difficulty && <InfoRow icon="barbell" label="Difficulty" value={event.difficulty.toUpperCase()} />}
+              {event.durationMinutes && <InfoRow icon="time" label="Duration" value={`${event.durationMinutes} minutes`} />}
+              {event.physicalIntensity && <InfoRow icon="fitness" label="Physical Intensity" value={event.physicalIntensity.toUpperCase()} />}
             </Card>
+          )}
 
-            {/* Pricing */}
-            <Card className="mb-4 p-4">
-              <Heading3 className="mb-3">Pricing</Heading3>
-              <InfoRow icon="cash-outline" label="Base Price" value={`${event.basePrice} DA`} />
-              {event.youthPrice && <InfoRow icon="person-outline" label="Youth Price (<26)" value={`${event.youthPrice} DA`} />}
-              {event.seniorPrice && <InfoRow icon="person-outline" label="Senior Price (≥60)" value={`${event.seniorPrice} DA`} />}
-              <InfoRow icon="people-outline" label="Age Range" value={`${event.minAge}${event.maxAge ? ` - ${event.maxAge}` : '+'} years`} />
-            </Card>
-
-            {/* Description */}
-            {event.description && (
-              <Card className="mb-4 p-4">
-                <Heading3 className="mb-3">Description</Heading3>
-                <BodyText>{event.description}</BodyText>
-              </Card>
-            )}
-
-            {/* Game Details */}
-            {event.eventType === 'game' && (
-              <Card className="mb-4 p-4">
-                <Heading3 className="mb-3">Game Details</Heading3>
-                {event.gameType && <InfoRow icon="game-controller-outline" label="Game Type" value={event.gameType} />}
-                {event.difficulty && <InfoRow icon="barbell-outline" label="Difficulty" value={event.difficulty.toUpperCase()} />}
-                {event.durationMinutes && <InfoRow icon="time-outline" label="Duration" value={`${event.durationMinutes} minutes`} />}
-                {event.physicalIntensity && <InfoRow icon="fitness-outline" label="Physical Intensity" value={event.physicalIntensity.toUpperCase()} />}
-              </Card>
-            )}
-
-            {/* Tags */}
-            {event.tags && event.tags.length > 0 && (
-              <Card style={{ marginBottom: spacing.md, padding: spacing.md }}>
-                <Heading3 className="mb-3">Tags</Heading3>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                  {event.tags.map((tag, index) => (
-                    <Badge 
-                      key={index} 
-                      variant="secondary" 
-                      size="sm"
-                      style={{ marginRight: 8, marginBottom: 8 }}
-                    >
+          {/* Tags */}
+          {event.tags && event.tags.length > 0 && (
+            <Card variant="elevated" className="p-7 mb-6">
+              <Text className="text-2xl font-black text-gray-900 mb-4">Tags</Text>
+              <View className="flex-row flex-wrap gap-3">
+                {event.tags.map((tag, index) => (
+                  <View key={index} className="bg-secondary-100 px-5 py-3 rounded-2xl border-2 border-secondary-200">
+                    <Text className="text-base font-bold text-secondary-700">
                       {tag}
-                    </Badge>
-                  ))}
-                </View>
-              </Card>
-            )}
-
-            {/* Registrations Section */}
-            <Card style={{ marginBottom: spacing.md, padding: spacing.md }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
-                <Heading3>Registrations ({registrations.length})</Heading3>
-                <TouchableOpacity 
-                  onPress={() => router.push(`/(admin)/(tabs)/registrations` as any)}
-                  activeOpacity={0.7}
-                >
-                  <Caption color="primary" weight="semibold">View All</Caption>
-                </TouchableOpacity>
-              </View>
-
-              {/* Registration Stats */}
-              <View style={{ flexDirection: 'row', marginBottom: spacing.md }}>
-                <View style={{ flex: 1, marginRight: spacing.sm }}>
-                  <View style={{ 
-                    backgroundColor: colors.success + '15', 
-                    padding: spacing.sm, 
-                    borderRadius: radius.md,
-                    borderLeftWidth: 3,
-                    borderLeftColor: colors.success
-                  }}>
-                    <Caption color="gray" style={{ fontSize: 10 }}>Confirmed</Caption>
-                    <BodyText weight="bold" style={{ color: colors.success, marginTop: 2 }}>
-                      {registrations.filter(r => r.status === 'confirmed').length}
-                    </BodyText>
+                    </Text>
                   </View>
-                </View>
-                
-                <View style={{ flex: 1, marginRight: spacing.sm }}>
-                  <View style={{ 
-                    backgroundColor: colors.primary + '15', 
-                    padding: spacing.sm, 
-                    borderRadius: radius.md,
-                    borderLeftWidth: 3,
-                    borderLeftColor: colors.primary
-                  }}>
-                    <Caption color="gray" style={{ fontSize: 10 }}>Attended</Caption>
-                    <BodyText weight="bold" style={{ color: colors.primary, marginTop: 2 }}>
-                      {registrations.filter(r => r.status === 'attended').length}
-                    </BodyText>
-                  </View>
-                </View>
-                
-                <View style={{ flex: 1 }}>
-                  <View style={{ 
-                    backgroundColor: colors.warning + '15', 
-                    padding: spacing.sm, 
-                    borderRadius: radius.md,
-                    borderLeftWidth: 3,
-                    borderLeftColor: colors.warning
-                  }}>
-                    <Caption color="gray" style={{ fontSize: 10 }}>Pending</Caption>
-                    <BodyText weight="bold" style={{ color: colors.warning, marginTop: 2 }}>
-                      {registrations.filter(r => r.status === 'pending').length}
-                    </BodyText>
-                  </View>
-                </View>
-              </View>
-
-              {/* Filter Buttons */}
-              <View style={{ flexDirection: 'row', marginBottom: spacing.md, flexWrap: 'wrap' }}>
-                {['all', 'confirmed', 'attended', 'pending', 'canceled'].map((status) => (
-                  <TouchableOpacity
-                    key={status}
-                    onPress={() => setFilterStatus(status === 'all' ? '' : status)}
-                    style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 6,
-                      borderRadius: radius.md,
-                      backgroundColor: filterStatus === (status === 'all' ? '' : status) 
-                        ? colors.primary 
-                        : colors.border,
-                      marginRight: 8,
-                      marginBottom: 8,
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Caption 
-                      style={{ 
-                        color: filterStatus === (status === 'all' ? '' : status) 
-                          ? '#fff' 
-                          : colors.text,
-                        fontWeight: '600',
-                        fontSize: 11
-                      }}
-                    >
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </Caption>
-                  </TouchableOpacity>
                 ))}
               </View>
-
-              {/* Registrations List */}
-              {loadingRegistrations ? (
-                <View style={{ paddingVertical: spacing.lg, alignItems: 'center' }}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                </View>
-              ) : registrations.filter(r => !filterStatus || r.status === filterStatus).length > 0 ? (
-                <View>
-                  {registrations
-                    .filter(r => !filterStatus || r.status === filterStatus)
-                    .slice(0, 5)
-                    .map((registration) => (
-                      <RegistrationCard
-                        key={registration.id}
-                        registration={registration}
-                        onPress={() => router.push(`/(admin)/registrations/${registration.id}` as any)}
-                        showEvent={false}
-                      />
-                    ))}
-                  {registrations.filter(r => !filterStatus || r.status === filterStatus).length > 5 && (
-                    <TouchableOpacity
-                      onPress={() => router.push(`/(admin)/(tabs)/registrations` as any)}
-                      style={{ 
-                        paddingVertical: spacing.sm, 
-                        alignItems: 'center',
-                        backgroundColor: colors.border,
-                        borderRadius: radius.md,
-                        marginTop: spacing.xs
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Caption color="primary" weight="semibold">
-                        View {registrations.filter(r => !filterStatus || r.status === filterStatus).length - 5} More
-                      </Caption>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ) : (
-                <View style={{ paddingVertical: spacing.xl, alignItems: 'center' }}>
-                  <Ionicons name="people-outline" size={48} color={colors.muted} />
-                  <Caption color="gray" style={{ marginTop: spacing.sm }}>
-                    {filterStatus ? `No ${filterStatus} registrations` : 'No registrations yet'}
-                  </Caption>
-                </View>
-              )}
             </Card>
+          )}
 
-            {/* Actions */}
-            <Button 
-              variant="outline" 
-              onPress={handleDelete}
-              style={{ marginBottom: spacing.md }}
-            >
-              <Ionicons name="trash-outline" size={20} color={colors.danger} style={{ marginRight: 8 }} />
-              Delete Event
-            </Button>
-          </View>
+          {/* Enhanced Registrations Section */}
+          <Card variant="elevated" className="p-7 mb-6">
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-2xl font-black text-gray-900">
+                Registrations ({registrations.length})
+              </Text>
+              <TouchableOpacity onPress={() => router.push(`/(admin)/(tabs)/registrations` as any)}>
+                <Text className="text-base font-bold text-primary-600">View All →</Text>
+              </TouchableOpacity>
+            </View>
 
-          <View style={{ height: 40 }} />
-        </ScrollView>
-      </Animated.View>
+            {/* Enhanced Stats Grid */}
+            <View className="flex-row gap-3 mb-6">
+              <View className="flex-1 bg-success-50 p-5 rounded-2xl border-l-4 border-success-600">
+                <Text className="text-2xs text-gray-600 font-black uppercase tracking-wider">Confirmed</Text>
+                <Text className="text-3xl font-black text-success-700 mt-2">
+                  {registrations.filter(r => r.status === 'confirmed').length}
+                </Text>
+              </View>
+              
+              <View className="flex-1 bg-primary-50 p-5 rounded-2xl border-l-4 border-primary-600">
+                <Text className="text-2xs text-gray-600 font-black uppercase tracking-wider">Attended</Text>
+                <Text className="text-3xl font-black text-primary-700 mt-2">
+                  {registrations.filter(r => r.status === 'attended').length}
+                </Text>
+              </View>
+              
+              <View className="flex-1 bg-warning-50 p-5 rounded-2xl border-l-4 border-warning-600">
+                <Text className="text-2xs text-gray-600 font-black uppercase tracking-wider">Pending</Text>
+                <Text className="text-3xl font-black text-warning-700 mt-2">
+                  {registrations.filter(r => r.status === 'pending').length}
+                </Text>
+              </View>
+            </View>
+
+            {/* Enhanced Filter Pills */}
+            <View className="flex-row flex-wrap gap-3 mb-6">
+              {['all', 'confirmed', 'attended', 'pending', 'canceled'].map((status) => (
+                <TouchableOpacity
+                  key={status}
+                  onPress={() => setFilterStatus(status === 'all' ? '' : status)}
+                  className={`px-5 py-3 rounded-2xl ${
+                    filterStatus === (status === 'all' ? '' : status)
+                      ? 'bg-primary-600 shadow-lg'
+                      : 'bg-gray-100 border-2 border-gray-200'
+                  }`}
+                  activeOpacity={0.8}
+                >
+                  <Text className={`text-sm font-black uppercase tracking-wide ${
+                    filterStatus === (status === 'all' ? '' : status)
+                      ? 'text-white'
+                      : 'text-gray-700'
+                  }`}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Registration List */}
+            {filteredRegistrations.length > 0 ? (
+              <>
+                {filteredRegistrations.slice(0, 5).map((registration) => (
+                  <RegistrationCard
+                    key={registration.id}
+                    registration={registration}
+                    onPress={() => router.push(`/(admin)/registrations/${registration.id}` as any)}
+                    showEvent={false}
+                  />
+                ))}
+                {filteredRegistrations.length > 5 && (
+                  <TouchableOpacity
+                    onPress={() => router.push(`/(admin)/(tabs)/registrations` as any)}
+                    className="bg-gray-100 rounded-2xl py-4 items-center mt-3 border-2 border-gray-200"
+                    activeOpacity={0.8}
+                  >
+                    <Text className="text-base font-black text-primary-600">
+                      View {filteredRegistrations.length - 5} More →
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            ) : (
+              <View className="items-center py-10">
+                <Ionicons name="people-outline" size={56} color="#d1d5db" />
+                <Text className="text-gray-500 mt-3 font-semibold">
+                  {filterStatus ? `No ${filterStatus} registrations` : 'No registrations yet'}
+                </Text>
+              </View>
+            )}
+          </Card>
+
+          {/* Enhanced Action Button */}
+          <Button
+            variant="outline"
+            size="lg"
+            onPress={handleDelete}
+            leftIcon={<Ionicons name="trash-outline" size={24} color="#ef4444" />}
+            fullWidth
+          >
+            <Text className="text-error-600 font-black text-lg">Delete Event</Text>
+          </Button>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -459,112 +443,22 @@ interface InfoRowProps {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value: string;
-  valueColor?: string;
 }
 
-function InfoRow({ icon, label, value, valueColor }: InfoRowProps) {
-  const { colors, spacing } = useTheme();
-
+function InfoRow({ icon, label, value }: InfoRowProps) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: spacing.sm }}>
-      <Ionicons name={icon} size={20} color={colors.muted} style={{ marginRight: spacing.sm, marginTop: 2 }} />
-      <View style={{ flex: 1 }}>
-        <Caption color="gray">{label}</Caption>
-        <BodyText style={{ color: valueColor || colors.text }}>{value}</BodyText>
+    <View className="flex-row items-start mb-5">
+      <View className="w-12 h-12 rounded-2xl bg-gray-100 items-center justify-center mr-4">
+        <Ionicons name={icon} size={24} color="#6b7280" />
+      </View>
+      <View className="flex-1">
+        <Text className="text-xs text-gray-500 font-black uppercase tracking-widest mb-1">
+          {label}
+        </Text>
+        <Text className="text-lg text-gray-900 font-semibold">
+          {value}
+        </Text>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  content: {
-    flex: 1,
-  },
-  imageContainer: {
-    height: 250,
-    position: 'relative',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  imagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageGradient: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: 'transparent',
-  },
-  statusBadge: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  featuredBadge: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quickStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    marginHorizontal: 16,
-  },
-  progressBar: {
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-});

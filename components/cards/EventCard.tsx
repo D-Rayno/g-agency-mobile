@@ -1,12 +1,17 @@
 // components/cards/EventCard.tsx
-import { Badge } from '@/components/ui/Badge';
-import { Card } from '@/components/ui/Card';
-import { BodyText, Caption } from '@/components/ui/Typography';
-import { useTheme } from '@/hooks/use-theme';
+/**
+ * Event Card Component
+ * Pure NativeWind styling - no theme hooks
+ */
+
+import { CapacityIndicator } from '@/components/ui/CapacityIndicator';
+import { Card, PressableCard } from '@/components/ui/Card';
+import { DateRangeDisplay } from '@/components/ui/DateRangeDisplay';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Event } from '@/types/admin';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 export interface EventCardProps {
   event: Event;
@@ -25,129 +30,66 @@ export function EventCard({
   isExpanded = false,
   registrationsPreview,
 }: EventCardProps) {
-  const { colors, spacing } = useTheme();
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'published': return 'primary';
-      case 'ongoing': return 'warning';
-      case 'finished': return 'success';
-      default: return 'secondary';
-    }
-  };
-
   const registeredCount = event.registeredCount || 0;
   const capacity = event.capacity || 0;
-  const availableSeats = event.availableSeats || 0;
-  const isFull = registeredCount >= capacity;
 
-  const Wrapper = onPress ? TouchableOpacity : View;
-  const wrapperProps = onPress ? { onPress, activeOpacity: 0.7 } : {};
+  const CardComponent = onPress ? PressableCard : Card;
+  const cardProps = onPress ? { onPress } : {};
 
   return (
-    <Wrapper {...wrapperProps}>
-      <Card className="mb-3 p-4">
-        {/* Header: Title and Status Badge */}
-        <View style={{ 
-          flexDirection: 'row', 
-          justifyContent: 'space-between', 
-          alignItems: 'flex-start', 
-          marginBottom: spacing.sm 
-        }}>
-          <View style={{ flex: 1, marginRight: spacing.sm }}>
-            <BodyText weight="semibold" numberOfLines={1}>
-              {event.name || 'Unnamed Event'}
-            </BodyText>
-            <Caption color="gray">
-              {[event.category, event.province].filter(Boolean).join(' • ') || 'No location'}
-            </Caption>
-          </View>
-          <Badge variant={getStatusVariant(event.status)} size="sm">
-            {(event.status || 'unknown').toUpperCase()}
-          </Badge>
+    <CardComponent className="mb-3 p-4" {...cardProps}>
+      {/* Header: Title and Status Badge */}
+      <View className="flex-row justify-between items-start mb-2">
+        <View className="flex-1 mr-2">
+          <Text className="text-base font-semibold text-gray-800" numberOfLines={1}>
+            {event.name || 'Unnamed Event'}
+          </Text>
+          <Text className="text-sm text-gray-500 mt-0.5">
+            {[event.category, event.province].filter(Boolean).join(' • ') || 'No location'}
+          </Text>
         </View>
+        <StatusBadge status={event.status} size="sm" />
+      </View>
 
-        {/* Registration Info */}
-        <View style={{ 
-          flexDirection: 'row', 
-          alignItems: 'center', 
-          marginBottom: spacing.xs 
-        }}>
-          <Ionicons 
-            name="people" 
-            size={16} 
-            color={colors.muted} 
-            style={{ marginRight: 6 }} 
-          />
-          <Caption color="gray">
-            {registeredCount}/{capacity} registered
-          </Caption>
-          <View style={{ 
-            marginLeft: 12, 
-            paddingHorizontal: 8, 
-            paddingVertical: 2, 
-            backgroundColor: isFull ? colors.danger + '20' : colors.success + '20',
-            borderRadius: 4 
-          }}>
-            <Caption 
-              style={{ 
-                fontSize: 10, 
-                color: isFull ? colors.danger : colors.success,
-                fontWeight: '600'
-              }}
-            >
-              {availableSeats > 0 ? `${availableSeats} seats left` : 'FULL'}
-            </Caption>
-          </View>
+      {/* Date Range */}
+      <DateRangeDisplay
+        startDate={event.startDate}
+        endDate={event.endDate}
+        format="short"
+        showTime={false}
+        className="mb-2"
+      />
+
+      {/* Capacity Indicator */}
+      <CapacityIndicator
+        current={registeredCount}
+        max={capacity}
+        variant="bar"
+        showPercentage
+      />
+
+      {/* Registrations Section (Optional) */}
+      {showRegistrations && registeredCount > 0 && (
+        <View className="mt-2 pt-2 border-t border-gray-200">
+          <TouchableOpacity
+            onPress={onExpandRegistrations}
+            className="flex-row items-center justify-between"
+          >
+            <Text className="text-sm font-semibold text-primary-600">
+              {registeredCount} Registration{registeredCount !== 1 ? 's' : ''}
+            </Text>
+            <Ionicons
+              name={isExpanded ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color="#4F46E5"
+            />
+          </TouchableOpacity>
+
+          {isExpanded && registrationsPreview && (
+            <View className="mt-2">{registrationsPreview}</View>
+          )}
         </View>
-
-        {/* Date Info */}
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons 
-            name="calendar-outline" 
-            size={16} 
-            color={colors.muted} 
-            style={{ marginRight: 6 }} 
-          />
-          <Caption color="gray">
-            {event.startDate ? new Date(event.startDate).toLocaleDateString() : 'No date'}
-          </Caption>
-        </View>
-
-        {/* Registrations Section (Optional) */}
-        {showRegistrations && registeredCount > 0 && (
-          <View style={{ 
-            marginTop: spacing.sm, 
-            paddingTop: spacing.sm, 
-            borderTopWidth: 1, 
-            borderTopColor: colors.border 
-          }}>
-            <TouchableOpacity
-              onPress={onExpandRegistrations}
-              style={{ 
-                flexDirection: 'row', 
-                alignItems: 'center', 
-                justifyContent: 'space-between' 
-              }}
-            >
-              <Caption color="primary" weight="semibold">
-                {registeredCount} Registration{registeredCount !== 1 ? 's' : ''}
-              </Caption>
-              <Ionicons 
-                name={isExpanded ? 'chevron-up' : 'chevron-down'} 
-                size={20} 
-                color={colors.primary} 
-              />
-            </TouchableOpacity>
-
-            {isExpanded && registrationsPreview && (
-              <View style={{ marginTop: spacing.sm }}>
-                {registrationsPreview}
-              </View>
-            )}
-          </View>
-        )}
-      </Card>
-    </Wrapper>
+      )}
+    </CardComponent>
   );
 }
