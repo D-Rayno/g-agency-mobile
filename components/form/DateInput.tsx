@@ -1,7 +1,7 @@
 // components/form/DateInput.tsx
 /**
- * Ultra-Premium Date Input Component
- * Enhanced with better styling and visual feedback
+ * Enhanced Date Input Component
+ * Modern design with refined interactions and elegant styling
  */
 
 import type { BaseInputProps } from '@/types/form';
@@ -79,7 +79,7 @@ export const DateInput = memo(
     validationType = 'optional',
   }: DateInputProps) => {
     const [isFocused, setIsFocused] = useState(false);
-    const [scaleAnim] = useState(new Animated.Value(1));
+    const [borderAnim] = useState(new Animated.Value(0));
 
     const validationSchema = useMemo(() => {
       switch (validationType) {
@@ -119,19 +119,20 @@ export const DateInput = memo(
 
     const handleFocus = () => {
       setIsFocused(true);
-      Animated.spring(scaleAnim, {
-        toValue: 1.02,
-        useNativeDriver: true,
-        speed: 50,
+      Animated.spring(borderAnim, {
+        toValue: 1,
+        useNativeDriver: false,
+        speed: 12,
+        bounciness: 8,
       }).start();
     };
 
     const handleBlur = () => {
       setIsFocused(false);
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        speed: 50,
+      Animated.spring(borderAnim, {
+        toValue: 0,
+        useNativeDriver: false,
+        speed: 12,
       }).start();
     };
 
@@ -149,33 +150,45 @@ export const DateInput = memo(
           }
         };
 
+        const borderColor = borderAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: error ? ['#fca5a5', '#ef4444'] : ['#e5e7eb', '#6366f1'],
+        });
+
         return (
           <View style={containerStyle}>
-            {/* Enhanced Label */}
+            {/* Label */}
             {label && (
-              <View className="flex-row items-center mb-3">
-                <Text className={cn('text-sm font-black text-gray-700 uppercase tracking-widest', labelStyle)}>
+              <View className="flex-row items-center mb-2">
+                <Text className={cn('text-sm font-semibold text-gray-700', labelStyle)}>
                   {label}
                 </Text>
-                {required && <Text className="text-error-600 ml-1">*</Text>}
+                {required && <Text className="text-rose-600 ml-1">*</Text>}
               </View>
             )}
 
-            {/* Enhanced Input Container */}
+            {/* Input Container */}
             <Animated.View
-              style={{ transform: [{ scale: scaleAnim }] }}
+              style={{ 
+                borderColor,
+                shadowColor: isFocused ? (error ? '#ef4444' : '#6366f1') : 'transparent',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: isFocused ? 0.1 : 0,
+                shadowRadius: 8,
+                elevation: isFocused ? 2 : 0,
+              }}
               className={cn(
-                'flex-row items-center border-[3px] rounded-2xl bg-gray-50 px-5 shadow-sm',
-                isFocused && !error ? 'border-primary-500 bg-primary-50/30 shadow-xl shadow-primary-500/20' : 'border-gray-200',
-                error && 'border-error-500 bg-error-50/30 shadow-xl shadow-error-500/20'
+                'flex-row items-center border-2 rounded-xl bg-white px-4',
+                isFocused && !error && 'bg-indigo-50/30',
+                error && 'border-rose-500 bg-rose-50/30'
               )}
             >
               {/* Calendar Icon */}
-              <View className="mr-4">
+              <View className="mr-3">
                 <Ionicons 
-                  name="calendar" 
-                  size={24} 
-                  color={isFocused ? '#4F46E5' : '#6b7280'} 
+                  name="calendar-outline" 
+                  size={22} 
+                  color={isFocused ? '#6366f1' : '#6b7280'} 
                 />
               </View>
 
@@ -185,17 +198,17 @@ export const DateInput = memo(
                 onFocus={handleFocus}
                 onBlur={handleBlur}
                 placeholder="DD/MM/YYYY"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor="#9ca3af"
                 keyboardType="numeric"
-                className="flex-1 text-gray-900 text-lg py-5 font-semibold"
+                className="flex-1 text-gray-900 text-base py-3 font-medium"
               />
             </Animated.View>
 
-            {/* Enhanced Error Display */}
+            {/* Error Display */}
             {error && (
-              <View className="flex-row items-center mt-3 bg-error-50 px-4 py-3 rounded-xl border-2 border-error-200">
-                <Ionicons name="alert-circle" size={18} color="#ef4444" />
-                <Text className="text-sm text-error-700 ml-2 font-bold flex-1">
+              <View className="flex-row items-center mt-2 px-3 py-2 bg-rose-50 rounded-lg border border-rose-200">
+                <Ionicons name="alert-circle" size={16} color="#f43f5e" />
+                <Text className="text-sm text-rose-700 ml-2 font-medium flex-1">
                   {error.message}
                 </Text>
               </View>
@@ -203,14 +216,14 @@ export const DateInput = memo(
 
             {/* Helper Text */}
             {!error && helperText && (
-              <Text className="text-sm text-gray-600 mt-2 font-medium">
+              <Text className="text-sm text-gray-500 mt-2 font-normal">
                 {helperText}
               </Text>
             )}
           </View>
         );
       },
-      [containerStyle, label, labelStyle, required, helperText, isFocused]
+      [containerStyle, label, labelStyle, required, helperText, isFocused, borderAnim]
     );
 
     return (

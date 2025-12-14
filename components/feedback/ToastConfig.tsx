@@ -1,141 +1,133 @@
-// components/toast/toast-config.tsx - Themed Toast Configuration
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Feather } from '@expo/vector-icons';
+// components/feedback/ToastConfig.tsx
+/**
+ * Enhanced Toast Configuration
+ * Modern design with refined animations and sophisticated styling
+ */
+
+import { cn } from '@/utils/cn';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Toast, { ToastConfig } from 'react-native-toast-message';
-import { colors, radius, spacing, typography } from '../../constants/theme';
+import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import type { ToastConfig } from 'react-native-toast-message';
 
 const { width } = Dimensions.get('window');
 
-// Custom toast component with theme support
-const CustomToast = ({ 
-  type, 
-  text1, 
-  text2, 
+// Custom toast component with modern styling
+const CustomToast = ({
+  type,
+  text1,
+  text2,
   onPress,
-  onClose 
 }: {
   type: 'success' | 'error' | 'info' | 'warning';
   text1?: string;
   text2?: string;
   onPress?: () => void;
-  onClose?: () => void;
 }) => {
-  const colorScheme = useColorScheme() ?? 'light';
-  const themeColors = colors[colorScheme];
-
   const getToastConfig = () => {
     switch (type) {
       case 'success':
         return {
-          backgroundColor: themeColors.success,
-          iconName: 'check-circle',
-          iconColor: themeColors.background,
-          borderColor: themeColors.success,
+          bgGradient: ['#f0fdf4', '#dcfce7'],
+          borderColor: 'border-green-500',
+          iconBg: 'bg-green-500',
+          iconName: 'checkmark-circle' as const,
+          iconColor: '#ffffff',
+          textColor: 'text-gray-900',
+          messageColor: 'text-gray-600',
+          accentColor: '#22c55e',
         };
       case 'error':
         return {
-          backgroundColor: themeColors.danger,
-          iconName: 'x-circle',
-          iconColor: themeColors.background,
-          borderColor: themeColors.danger,
+          bgGradient: ['#fef2f2', '#fee2e2'],
+          borderColor: 'border-rose-500',
+          iconBg: 'bg-rose-500',
+          iconName: 'close-circle' as const,
+          iconColor: '#ffffff',
+          textColor: 'text-gray-900',
+          messageColor: 'text-gray-600',
+          accentColor: '#f43f5e',
         };
       case 'warning':
         return {
-          backgroundColor: themeColors.warning,
-          iconName: 'alert-triangle',
-          iconColor: themeColors.text,
-          borderColor: themeColors.warning,
+          bgGradient: ['#fffbeb', '#fef3c7'],
+          borderColor: 'border-amber-500',
+          iconBg: 'bg-amber-500',
+          iconName: 'warning' as const,
+          iconColor: '#ffffff',
+          textColor: 'text-gray-900',
+          messageColor: 'text-gray-600',
+          accentColor: '#f59e0b',
         };
       case 'info':
       default:
         return {
-          backgroundColor: themeColors.info,
-          iconName: 'info',
-          iconColor: themeColors.background,
-          borderColor: themeColors.info,
+          bgGradient: ['#eef2ff', '#e0e7ff'],
+          borderColor: 'border-indigo-500',
+          iconBg: 'bg-indigo-500',
+          iconName: 'information-circle' as const,
+          iconColor: '#ffffff',
+          textColor: 'text-gray-900',
+          messageColor: 'text-gray-600',
+          accentColor: '#6366f1',
         };
     }
   };
 
   const config = getToastConfig();
 
-  const styles = StyleSheet.create({
-    container: {
-      height: 'auto',
-      minHeight: 60,
-      width: width - spacing.lg * 2,
-      backgroundColor: themeColors.card,
-      borderRadius: radius.md,
-      borderLeftWidth: 4,
-      borderLeftColor: config.borderColor,
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      marginHorizontal: spacing.lg,
-      shadowColor: themeColors.text,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
-    },
-    iconContainer: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: config.backgroundColor,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: spacing.sm,
-    },
-    contentContainer: {
-      flex: 1,
-      paddingRight: spacing.sm,
-    },
-    title: {
-      fontSize: typography.body.fontSize,
-      fontWeight: '600',
-      color: themeColors.text,
-      marginBottom: text2 ? spacing.xs / 2 : 0,
-    },
-    message: {
-      fontSize: typography.caption.fontSize,
-      color: themeColors.muted,
-      lineHeight: 16,
-    },
-    closeButton: {
-      width: 24,
-      height: 24,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-  });
-
   return (
     <TouchableOpacity
-      style={styles.container}
+      className={cn(
+        'mx-4 rounded-2xl border-l-[5px] flex-row items-center px-4 py-4 bg-white',
+        config.borderColor
+      )}
+      style={{
+        width: width - 32,
+        minHeight: 72,
+        shadowColor: config.accentColor,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 8,
+      }}
       onPress={onPress}
       activeOpacity={onPress ? 0.8 : 1}
+      disabled={!onPress}
     >
-      <View style={styles.iconContainer}>
-        <Feather
-          name={config.iconName as any}
-          size={18}
-          color={config.iconColor}
-        />
+      {/* Icon Container with Pulse Effect */}
+      <View 
+        className={cn('w-12 h-12 rounded-full items-center justify-center mr-3.5', config.iconBg)}
+        style={{
+          shadowColor: config.accentColor,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+          elevation: 4,
+        }}
+      >
+        <Ionicons name={config.iconName} size={24} color={config.iconColor} />
       </View>
 
-      <View style={styles.contentContainer}>
-        {text1 && <Text style={styles.title} numberOfLines={2}>{text1}</Text>}
-        {text2 && <Text style={styles.message} numberOfLines={3}>{text2}</Text>}
+      {/* Content */}
+      <View className="flex-1">
+        {text1 && (
+          <Text className={cn('text-base font-bold mb-0.5', config.textColor)} numberOfLines={2}>
+            {text1}
+          </Text>
+        )}
+        {text2 && (
+          <Text className={cn('text-sm font-normal leading-tight', config.messageColor)} numberOfLines={3}>
+            {text2}
+          </Text>
+        )}
       </View>
 
-      {onClose && (
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Feather name="x" size={16} color={themeColors.muted} />
-        </TouchableOpacity>
+      {/* Close Button (optional) */}
+      {onPress && (
+        <View className="ml-2">
+          <Ionicons name="close" size={20} color="#9ca3af" />
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -175,46 +167,6 @@ export const toastConfig: ToastConfig = {
       onPress={props.onPress}
     />
   ),
-  // You can also override the default ones if needed
-  tomatoToast: ({ text1, props }) => (
-    <View style={{ height: 60, width: '100%', backgroundColor: 'tomato' }}>
-      <Text>{text1}</Text>
-      <Text>{props.uuid}</Text>
-    </View>
-  ),
-};
-
-// Helper functions for showing toasts with translations
-export const showSuccessToast = (title: string, message?: string) => {
-  Toast.show({
-    type: 'success',
-    text1: title,
-    text2: message,
-  });
-};
-
-export const showErrorToast = (title: string, message?: string) => {
-  Toast.show({
-    type: 'error',
-    text1: title,
-    text2: message,
-  });
-};
-
-export const showInfoToast = (title: string, message?: string) => {
-  Toast.show({
-    type: 'info',
-    text1: title,
-    text2: message,
-  });
-};
-
-export const showWarningToast = (title: string, message?: string) => {
-  Toast.show({
-    type: 'warning',
-    text1: title,
-    text2: message,
-  });
 };
 
 export default toastConfig;

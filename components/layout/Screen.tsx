@@ -1,22 +1,22 @@
 // components/layout/Screen.tsx
 /**
- * Screen Container Component with FlatList Support
- * Pure NativeWind styling - no theme hooks
+ * Enhanced Screen Container Component with FlatList Support
+ * Modern design with refined styling and smooth interactions
  */
 
 import {
-    useCallback,
-    useState,
-    type ComponentType,
-    type ReactElement,
-    type ReactNode,
+  useCallback,
+  useState,
+  type ComponentType,
+  type ReactElement,
+  type ReactNode,
 } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    View,
-    ViewStyle,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  View,
+  ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -38,7 +38,9 @@ type ScreenProps<T = any> = {
   contentContainerStyle?: ViewStyle;
   ListHeaderComponent?: ComponentType<any> | ReactElement | null;
   ListFooterComponent?: ComponentType<any> | ReactElement | null;
+  ListEmptyComponent?: ComponentType<any> | ReactElement | null;
   showsVerticalScrollIndicator?: boolean;
+  backgroundColor?: string;
 };
 
 export function Screen<T = any>({
@@ -53,7 +55,9 @@ export function Screen<T = any>({
   contentContainerStyle,
   ListHeaderComponent,
   ListFooterComponent,
-  showsVerticalScrollIndicator = true,
+  ListEmptyComponent,
+  showsVerticalScrollIndicator = false,
+  backgroundColor = '#F9FAFB',
 }: ScreenProps<T>) {
   const [internalRefreshing, setInternalRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
@@ -71,7 +75,6 @@ export function Screen<T = any>({
   }, [onRefresh]);
 
   const handleEndReached = useCallback(() => {
-    // Prevent multiple calls when already loading
     if (loadingMore || !onInfinite) return;
     onInfinite();
   }, [onInfinite, loadingMore]);
@@ -87,8 +90,8 @@ export function Screen<T = any>({
           {
             flexGrow: 1,
             paddingHorizontal: 16,
-            backgroundColor: '#F9FAFB',
-            // Add bottom padding to account for tab bar (70px) + safe area
+            paddingTop: 8,
+            backgroundColor,
             paddingBottom: Math.max(70 + 16, insets.bottom + 16),
           },
           contentContainerStyle,
@@ -99,29 +102,30 @@ export function Screen<T = any>({
             <RefreshControl
               refreshing={refreshing ?? internalRefreshing}
               onRefresh={handleRefresh}
-              colors={['#4F46E5']}
-              tintColor="#4F46E5"
+              colors={['#6366f1']}
+              tintColor="#6366f1"
+              progressBackgroundColor="#ffffff"
             />
           ) : undefined
         }
         onEndReached={handleEndReached}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.3}
         ListHeaderComponent={ListHeaderComponent ?? undefined}
         ListFooterComponent={
           ListFooterComponent ??
           (onInfinite && loadingMore ? (
-            <View className="py-4 items-center justify-center">
-              <ActivityIndicator size="small" color="#4F46E5" />
+            <View className="py-5 items-center justify-center">
+              <ActivityIndicator size="small" color="#6366f1" />
             </View>
           ) : undefined)
         }
+        ListEmptyComponent={ListEmptyComponent ?? undefined}
         showsVerticalScrollIndicator={showsVerticalScrollIndicator}
-        // Optimize performance
         removeClippedSubviews={true}
         maxToRenderPerBatch={10}
         updateCellsBatchingPeriod={50}
         windowSize={10}
-        // Prevent content from jumping on refresh
+        initialNumToRender={10}
         maintainVisibleContentPosition={{
           minIndexForVisible: 0,
         }}
@@ -136,7 +140,8 @@ export function Screen<T = any>({
         {
           flexGrow: 1,
           paddingHorizontal: 16,
-          backgroundColor: '#F9FAFB',
+          paddingTop: 8,
+          backgroundColor,
           paddingBottom: Math.max(70 + 16, insets.bottom + 16),
         },
         contentContainerStyle,
@@ -146,3 +151,5 @@ export function Screen<T = any>({
     </View>
   );
 }
+
+export default Screen;

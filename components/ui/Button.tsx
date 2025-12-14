@@ -1,7 +1,7 @@
 // components/ui/Button.tsx
 /**
- * Ultra-Premium Button Component
- * Enhanced with animations, better feedback, and refined styling
+ * Enhanced Premium Button Component
+ * Modern design with refined interactions and sophisticated styling
  */
 
 import { cn } from '@/utils/cn';
@@ -47,7 +47,7 @@ export const Button = React.forwardRef<View, ButtonProps>(
       className,
       textClassName,
       hapticFeedback = true,
-      gradient = false,
+      gradient = true,
       animated = true,
       onPress,
       ...props
@@ -55,26 +55,41 @@ export const Button = React.forwardRef<View, ButtonProps>(
     ref
   ) => {
     const [scaleAnim] = useState(new Animated.Value(1));
+    const [glowAnim] = useState(new Animated.Value(0));
 
     const handlePressIn = () => {
       if (animated) {
-        Animated.spring(scaleAnim, {
-          toValue: 0.96,
-          useNativeDriver: true,
-          speed: 50,
-          bounciness: 4,
-        }).start();
+        Animated.parallel([
+          Animated.spring(scaleAnim, {
+            toValue: 0.97,
+            useNativeDriver: true,
+            speed: 50,
+            bounciness: 5,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]).start();
       }
     };
 
     const handlePressOut = () => {
       if (animated) {
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          useNativeDriver: true,
-          speed: 50,
-          bounciness: 8,
-        }).start();
+        Animated.parallel([
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            speed: 50,
+            bounciness: 10,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start();
       }
     };
 
@@ -88,26 +103,35 @@ export const Button = React.forwardRef<View, ButtonProps>(
     const baseStyles = 'flex-row items-center justify-center rounded-2xl overflow-hidden';
 
     const variantStyles = {
-      primary: 'bg-primary-600 active:bg-primary-700 shadow-xl shadow-primary-500/40',
-      secondary: 'bg-secondary-600 active:bg-secondary-700 shadow-xl shadow-secondary-500/40',
-      outline: 'bg-transparent border-[3px] border-primary-600 active:bg-primary-50 active:border-primary-700',
+      primary: 'bg-indigo-600 active:bg-indigo-700',
+      secondary: 'bg-teal-600 active:bg-teal-700',
+      outline: 'bg-transparent border-2 border-indigo-600 active:bg-indigo-50',
       ghost: 'bg-transparent active:bg-gray-100',
-      danger: 'bg-error-600 active:bg-error-700 shadow-xl shadow-error-500/40',
-      success: 'bg-success-600 active:bg-success-700 shadow-xl shadow-success-500/40',
+      danger: 'bg-rose-600 active:bg-rose-700',
+      success: 'bg-green-600 active:bg-green-700',
+    };
+
+    const shadowStyles = {
+      primary: 'shadow-lg shadow-indigo-500/20',
+      secondary: 'shadow-lg shadow-teal-500/20',
+      outline: 'shadow-sm',
+      ghost: '',
+      danger: 'shadow-lg shadow-rose-500/20',
+      success: 'shadow-lg shadow-green-500/20',
     };
 
     const sizeStyles = {
-      sm: 'px-5 py-3 min-h-[44px]',
-      md: 'px-7 py-4 min-h-[52px]',
-      lg: 'px-9 py-5 min-h-[60px]',
-      xl: 'px-12 py-6 min-h-[68px]',
+      sm: 'px-4 py-2.5 min-h-[40px]',
+      md: 'px-6 py-3.5 min-h-[48px]',
+      lg: 'px-8 py-4 min-h-[56px]',
+      xl: 'px-10 py-5 min-h-[64px]',
     };
 
     const textVariantStyles = {
       primary: 'text-white',
       secondary: 'text-white',
-      outline: 'text-primary-700',
-      ghost: 'text-gray-900',
+      outline: 'text-indigo-700',
+      ghost: 'text-gray-700',
       danger: 'text-white',
       success: 'text-white',
     };
@@ -119,20 +143,13 @@ export const Button = React.forwardRef<View, ButtonProps>(
       xl: 'text-xl',
     };
 
-    const iconSizeMap = {
-      sm: 18,
-      md: 20,
-      lg: 24,
-      xl: 28,
-    };
-
-    const disabledStyles = isDisabled || isLoading ? 'opacity-40' : '';
+    const disabledStyles = isDisabled || isLoading ? 'opacity-50' : '';
     const widthStyles = fullWidth ? 'w-full' : '';
 
     const gradientColors = {
-      primary: ['#4F46E5', '#6366f1', '#818cf8'] as const,
-      secondary: ['#14B8A6', '#0d9488', '#0f766e'] as const,
-      danger: ['#ef4444', '#dc2626', '#b91c1c'] as const,
+      primary: ['#6366f1', '#4f46e5', '#4338ca'] as const,
+      secondary: ['#14b8a6', '#0d9488', '#0f766e'] as const,
+      danger: ['#f43f5e', '#e11d48', '#be123c'] as const,
       success: ['#22c55e', '#16a34a', '#15803d'] as const,
       outline: ['transparent', 'transparent'] as const,
       ghost: ['transparent', 'transparent'] as const,
@@ -144,11 +161,11 @@ export const Button = React.forwardRef<View, ButtonProps>(
           <View className="flex-row items-center">
             <ActivityIndicator
               size="small"
-              color={variant === 'outline' || variant === 'ghost' ? '#4F46E5' : '#ffffff'}
+              color={variant === 'outline' || variant === 'ghost' ? '#4f46e5' : '#ffffff'}
             />
             <Text
               className={cn(
-                'ml-3 font-bold tracking-wide',
+                'ml-2.5 font-semibold',
                 textVariantStyles[variant],
                 textSizeStyles[size],
                 textClassName
@@ -159,10 +176,10 @@ export const Button = React.forwardRef<View, ButtonProps>(
           </View>
         ) : (
           <>
-            {leftIcon && <View className="mr-3">{leftIcon}</View>}
+            {leftIcon && <View className="mr-2.5">{leftIcon}</View>}
             <Text
               className={cn(
-                'font-extrabold tracking-wide',
+                'font-semibold tracking-tight',
                 textVariantStyles[variant],
                 textSizeStyles[size],
                 textClassName
@@ -170,11 +187,16 @@ export const Button = React.forwardRef<View, ButtonProps>(
             >
               {children}
             </Text>
-            {rightIcon && <View className="ml-3">{rightIcon}</View>}
+            {rightIcon && <View className="ml-2.5">{rightIcon}</View>}
           </>
         )}
       </>
     );
+
+    const glowOpacity = glowAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 0.3],
+    });
 
     if (gradient && (variant === 'primary' || variant === 'secondary' || variant === 'danger' || variant === 'success')) {
       return (
@@ -184,32 +206,46 @@ export const Button = React.forwardRef<View, ButtonProps>(
             width: fullWidth ? '100%' : undefined,
           }}
         >
-          <Pressable
-            ref={ref}
-            onPress={handlePress}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            disabled={isDisabled || isLoading}
-            className={cn(
-              baseStyles,
-              'shadow-2xl',
-              disabledStyles,
-              className
-            )}
-            {...props}
-          >
-            <LinearGradient
-              colors={gradientColors[variant]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+          <View className={cn('relative', widthStyles)}>
+            {/* Glow effect */}
+            <Animated.View
+              className="absolute inset-0 rounded-2xl"
+              style={{
+                opacity: glowOpacity,
+                backgroundColor: variant === 'primary' ? '#6366f1' : 
+                                variant === 'secondary' ? '#10b981' :
+                                variant === 'danger' ? '#f43f5e' : '#22c55e',
+                transform: [{ scale: 1.05 }],
+              }}
+            />
+            
+            <Pressable
+              ref={ref}
+              onPress={handlePress}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              disabled={isDisabled || isLoading}
               className={cn(
-                'flex-row items-center justify-center w-full',
-                sizeStyles[size]
+                baseStyles,
+                shadowStyles[variant],
+                disabledStyles,
+                className
               )}
+              {...props}
             >
-              {buttonContent}
-            </LinearGradient>
-          </Pressable>
+              <LinearGradient
+                colors={gradientColors[variant]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className={cn(
+                  'flex-row items-center justify-center w-full',
+                  sizeStyles[size]
+                )}
+              >
+                {buttonContent}
+              </LinearGradient>
+            </Pressable>
+          </View>
         </Animated.View>
       );
     }
@@ -230,6 +266,7 @@ export const Button = React.forwardRef<View, ButtonProps>(
           className={cn(
             baseStyles,
             variantStyles[variant],
+            shadowStyles[variant],
             sizeStyles[size],
             disabledStyles,
             widthStyles,

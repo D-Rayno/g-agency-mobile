@@ -1,7 +1,7 @@
 // components/form/SelectInput.tsx
 /**
- * Select Input Component with Modal Dropdown
- * Pure NativeWind styling - no theme hooks
+ * Enhanced Select Input Component with Modal Dropdown
+ * Modern design with smooth animations and refined styling
  */
 
 import { cn } from '@/utils/cn';
@@ -10,15 +10,15 @@ import type { FC } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import {
-    Animated,
-    Dimensions,
-    Easing,
-    Modal,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Animated,
+  Dimensions,
+  Easing,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from 'react-native';
 
 type Option = {
@@ -59,7 +59,7 @@ export const SelectInput: FC<SelectInputProps> = ({
   errorTextStyle,
   required,
   options,
-  maxDropdownHeight = 200,
+  maxDropdownHeight = 240,
 }) => {
   const [open, setOpen] = useState(false);
   const [inputLayout, setInputLayout] = useState({
@@ -71,8 +71,9 @@ export const SelectInput: FC<SelectInputProps> = ({
 
   const inputRef = useRef<any>(null);
   const opacityAnim = useRef(new Animated.Value(0)).current;
-  const translateYAnim = useRef(new Animated.Value(-10)).current;
+  const translateYAnim = useRef(new Animated.Value(-8)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
   const measureInput = () => {
     if (inputRef.current) {
@@ -98,19 +99,25 @@ export const SelectInput: FC<SelectInputProps> = ({
       Animated.parallel([
         Animated.timing(opacityAnim, {
           toValue: 1,
-          duration: 250,
+          duration: 200,
           easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
-        Animated.timing(translateYAnim, {
+        Animated.spring(translateYAnim, {
           toValue: 0,
-          duration: 250,
-          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
+          speed: 12,
+          bounciness: 8,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          speed: 12,
+          bounciness: 6,
         }),
         Animated.timing(rotateAnim, {
           toValue: 1,
-          duration: 250,
+          duration: 200,
           useNativeDriver: true,
         }),
       ]).start();
@@ -122,13 +129,18 @@ export const SelectInput: FC<SelectInputProps> = ({
           useNativeDriver: true,
         }),
         Animated.timing(translateYAnim, {
-          toValue: -10,
+          toValue: -8,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.95,
           duration: 150,
           useNativeDriver: true,
         }),
         Animated.timing(rotateAnim, {
           toValue: 0,
-          duration: 200,
+          duration: 150,
           useNativeDriver: true,
         }),
       ]).start();
@@ -140,12 +152,9 @@ export const SelectInput: FC<SelectInputProps> = ({
     outputRange: ['0deg', '180deg'],
   });
 
-  // Calculate dropdown position
   const getDropdownStyle = () => {
-    const dropdownTop = inputLayout.y + inputLayout.height + 4;
-    const dropdownBottom = screenHeight - inputLayout.y + 4;
-
-    // Check if dropdown should appear above or below the input
+    const dropdownTop = inputLayout.y + inputLayout.height + 8;
+    const dropdownBottom = screenHeight - inputLayout.y + 8;
     const showAbove = dropdownTop + maxDropdownHeight > screenHeight - 50;
 
     return {
@@ -165,13 +174,13 @@ export const SelectInput: FC<SelectInputProps> = ({
         <View style={containerStyle}>
           {/* Label */}
           {label && (
-            <View className="flex-row items-center">
+            <View className="flex-row items-center mb-2">
               <Text
-                className={cn('text-base font-normal text-gray-800 mb-1', labelStyle)}
+                className={cn('text-sm font-semibold text-gray-700', labelStyle)}
               >
                 {label}
               </Text>
-              {required && <Text className="text-error-600 ml-1">*</Text>}
+              {required && <Text className="text-rose-600 ml-1">*</Text>}
             </View>
           )}
 
@@ -180,8 +189,8 @@ export const SelectInput: FC<SelectInputProps> = ({
             ref={inputRef}
             onPress={handleOpen}
             className={cn(
-              'border border-gray-300 rounded-lg py-2.5 px-3 bg-white min-h-[40px] flex-row items-center justify-between',
-              error && 'border-error-600',
+              'border-2 border-gray-200 rounded-xl py-3 px-4 bg-white min-h-[48px] flex-row items-center justify-between',
+              error && 'border-rose-500 bg-rose-50/30',
               inputStyle
             )}
             activeOpacity={0.7}
@@ -189,8 +198,8 @@ export const SelectInput: FC<SelectInputProps> = ({
             <View className="flex-1 mr-2">
               <Text
                 className={cn(
-                  'text-base',
-                  value ? 'text-gray-800' : 'text-gray-400'
+                  'text-base font-medium',
+                  value ? 'text-gray-900' : 'text-gray-400'
                 )}
                 numberOfLines={1}
                 ellipsizeMode="tail"
@@ -202,7 +211,7 @@ export const SelectInput: FC<SelectInputProps> = ({
             </View>
 
             <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-              <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-down" size={20} color="#6b7280" />
             </Animated.View>
           </TouchableOpacity>
 
@@ -214,33 +223,48 @@ export const SelectInput: FC<SelectInputProps> = ({
             onRequestClose={handleClose}
           >
             <TouchableWithoutFeedback onPress={handleClose}>
-              <View className="flex-1 bg-transparent">
+              <View className="flex-1 bg-black/20">
                 <Animated.View
-                  className="absolute bg-white border border-gray-300 rounded-lg overflow-hidden shadow-lg"
+                  className="absolute bg-white border-2 border-gray-200 rounded-xl overflow-hidden shadow-2xl"
                   style={[
                     getDropdownStyle(),
                     {
                       opacity: opacityAnim,
-                      transform: [{ translateY: translateYAnim }],
+                      transform: [
+                        { translateY: translateYAnim },
+                        { scale: scaleAnim },
+                      ],
                     },
                   ]}
                 >
                   <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false}>
-                    {options.map((item, index) => (
-                      <TouchableOpacity
-                        key={item.value}
-                        className={cn(
-                          'py-3 px-4 border-b border-gray-200',
-                          index === options.length - 1 && 'border-b-0'
-                        )}
-                        onPress={() => {
-                          onChange(item.value);
-                          handleClose();
-                        }}
-                      >
-                        <Text className="text-base text-gray-800">{item.label}</Text>
-                      </TouchableOpacity>
-                    ))}
+                    {options.map((item, index) => {
+                      const isSelected = item.value === value;
+                      return (
+                        <TouchableOpacity
+                          key={item.value}
+                          className={cn(
+                            'py-3.5 px-4 flex-row items-center justify-between',
+                            index !== options.length - 1 && 'border-b border-gray-100',
+                            isSelected && 'bg-indigo-50'
+                          )}
+                          onPress={() => {
+                            onChange(item.value);
+                            handleClose();
+                          }}
+                        >
+                          <Text className={cn(
+                            'text-base',
+                            isSelected ? 'text-indigo-700 font-semibold' : 'text-gray-900 font-medium'
+                          )}>
+                            {item.label}
+                          </Text>
+                          {isSelected && (
+                            <Ionicons name="checkmark-circle" size={20} color="#6366f1" />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
                   </ScrollView>
                 </Animated.View>
               </View>
@@ -249,16 +273,19 @@ export const SelectInput: FC<SelectInputProps> = ({
 
           {/* Helper Text */}
           {!error && helperText && (
-            <Text className={cn('text-sm text-gray-500 mt-1', helperTextStyle)}>
+            <Text className={cn('text-sm text-gray-500 mt-2 font-normal', helperTextStyle)}>
               {helperText}
             </Text>
           )}
 
           {/* Error Text */}
           {error && (
-            <Text className={cn('text-sm text-error-600 mt-1', errorTextStyle)}>
-              {error.message}
-            </Text>
+            <View className="flex-row items-center mt-2 px-3 py-2 bg-rose-50 rounded-lg border border-rose-200">
+              <Ionicons name="alert-circle" size={16} color="#f43f5e" />
+              <Text className={cn('text-sm text-rose-700 ml-2 font-medium flex-1', errorTextStyle)}>
+                {error.message}
+              </Text>
+            </View>
           )}
         </View>
       )}

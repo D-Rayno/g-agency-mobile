@@ -1,4 +1,9 @@
 // components/ui/DateRangeDisplay.tsx
+/**
+ * Enhanced Date Range Display Component
+ * Modern design with refined styling and better visual hierarchy
+ */
+
 import { cn } from '@/utils/cn';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
@@ -10,6 +15,7 @@ export interface DateRangeDisplayProps extends ViewProps {
   format?: 'full' | 'short' | 'compact';
   showTime?: boolean;
   showIcon?: boolean;
+  variant?: 'default' | 'outlined' | 'filled';
   className?: string;
 }
 
@@ -21,6 +27,7 @@ export const DateRangeDisplay = React.forwardRef<View, DateRangeDisplayProps>(
       format = 'short',
       showTime = true,
       showIcon = true,
+      variant = 'default',
       className,
       ...props
     },
@@ -28,7 +35,6 @@ export const DateRangeDisplay = React.forwardRef<View, DateRangeDisplayProps>(
   ) => {
     const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
     const end = typeof endDate === 'string' ? new Date(endDate) : endDate;
-    const now = new Date();
 
     // Helper: Check if same day
     const isSameDay = (date1: Date, date2: Date) => {
@@ -108,33 +114,38 @@ export const DateRangeDisplay = React.forwardRef<View, DateRangeDisplayProps>(
     // Generate display text
     const getDisplayText = () => {
       if (isSameDay(start, end)) {
-        // Same day event
         const dateStr = formatDate(start, false);
         if (showTime) {
           return `${dateStr}, ${formatTime(start)} - ${formatTime(end)}`;
         }
         return dateStr;
       } else {
-        // Multi-day event
         return `${formatDate(start)} - ${formatDate(end)}`;
       }
+    };
+
+    const variantStyles = {
+      default: '',
+      outlined: 'border border-gray-200 rounded-lg px-3 py-2',
+      filled: 'bg-gray-100 rounded-lg px-3 py-2',
     };
 
     return (
       <View
         ref={ref}
-        className={cn('flex-row items-center', className)}
+        className={cn('flex-row items-center', variantStyles[variant], className)}
         {...props}
       >
         {showIcon && (
-          <Ionicons
-            name="calendar-outline"
-            size={16}
-            color="#6b7280"
-            style={{ marginRight: 6 }}
-          />
+          <View className="w-7 h-7 rounded-full bg-indigo-100 items-center justify-center mr-2">
+            <Ionicons
+              name="calendar-outline"
+              size={16}
+              color="#6366f1"
+            />
+          </View>
         )}
-        <Text className="text-sm text-gray-700 flex-1">
+        <Text className="text-sm text-gray-700 font-medium flex-1">
           {getDisplayText()}
         </Text>
       </View>

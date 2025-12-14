@@ -1,14 +1,15 @@
 // components/form/OTPInput.tsx
 /**
- * OTP Input Component (6-digit code entry)
- * Pure NativeWind styling - no theme hooks
+ * Enhanced OTP Input Component (6-digit code entry)
+ * Modern design with smooth animations and refined styling
  */
 
 import { TextInputProps } from '@/types/form';
 import { cn } from '@/utils/cn';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { Text, TextInput, View } from 'react-native';
+import { Animated, Text, TextInput, View } from 'react-native';
 
 type OTPInputProps = Omit<TextInputProps, 'multiline' | 'numberOfLines'> & {
   length?: number;
@@ -31,6 +32,9 @@ export const OTPInput: React.FC<OTPInputProps> = ({
 }) => {
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  const scaleAnims = useRef(
+    Array.from({ length }, () => new Animated.Value(1))
+  ).current;
 
   const handleChangeText = (
     text: string,
@@ -38,24 +42,16 @@ export const OTPInput: React.FC<OTPInputProps> = ({
     onChange: (value: string) => void,
     currentValue: string
   ) => {
-    // Only allow numbers
     const numericText = text.replace(/[^0-9]/g, '');
-
     const otpArray = currentValue ? currentValue.split('') : Array(length).fill('');
 
     if (numericText.length > 0) {
-      // Set the digit at current index
       otpArray[index] = numericText[numericText.length - 1];
-
-      // Move to next input
       if (index < length - 1) {
         inputRefs.current[index + 1]?.focus();
       }
     } else {
-      // Clear current digit
       otpArray[index] = '';
-
-      // Move to previous input
       if (index > 0) {
         inputRefs.current[index - 1]?.focus();
       }
@@ -64,7 +60,6 @@ export const OTPInput: React.FC<OTPInputProps> = ({
     const newValue = otpArray.join('');
     onChange(newValue);
 
-    // Check if OTP is complete
     if (newValue.length === length && onComplete) {
       onComplete(newValue);
     }
@@ -80,16 +75,35 @@ export const OTPInput: React.FC<OTPInputProps> = ({
       const otpArray = currentValue ? currentValue.split('') : Array(length).fill('');
 
       if (otpArray[index]) {
-        // Clear current digit
         otpArray[index] = '';
         onChange(otpArray.join(''));
       } else if (index > 0) {
-        // Move to previous input and clear it
         otpArray[index - 1] = '';
         onChange(otpArray.join(''));
         inputRefs.current[index - 1]?.focus();
       }
     }
+  };
+
+  const handleFocus = (index: number) => {
+    setFocusedIndex(index);
+    Animated.spring(scaleAnims[index], {
+      toValue: 1.05,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 10,
+    }).start();
+  };
+
+  const handleBlur = (index: number) => {
+    if (focusedIndex === index) {
+      setFocusedIndex(null);
+    }
+    Animated.spring(scaleAnims[index], {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+    }).start();
   };
 
   return (
@@ -101,60 +115,81 @@ export const OTPInput: React.FC<OTPInputProps> = ({
         <View style={containerStyle}>
           {/* Label */}
           {label && (
-            <View className="flex-row items-center">
-              <Text className={cn('text-base font-normal text-gray-800 mb-2', labelStyle)}>
+            <View className="flex-row items-center mb-3">
+              <Text className={cn('text-sm font-semibold text-gray-700', labelStyle)}>
                 {label}
               </Text>
-              {required && <Text className="text-error-600 ml-1">*</Text>}
+              {required && <Text className="text-rose-600 ml-1">*</Text>}
             </View>
           )}
 
           {/* OTP Inputs */}
           <View className="flex-row justify-between gap-2">
-            {Array.from({ length }, (_, index) => (
-              <TextInput
-                key={index}
-                ref={(ref) => {
-                  inputRefs.current[index] = ref;
-                }}
-                className={cn(
-                  'flex-1 h-14 border-2 rounded-lg text-center text-xl font-semibold bg-white',
-                  focusedIndex === index && !error
-                    ? 'border-primary-500'
-                    : 'border-gray-300',
-                  error && 'border-error-600'
-                )}
-                style={{ color: '#1F2937' }}
-                value={value && value[index] ? value[index] : ''}
-                onChangeText={(text) =>
-                  handleChangeText(text, index, onChange, value || '')
-                }
-                onKeyPress={({ nativeEvent }) => {
-                  handleKeyPress(nativeEvent.key, index, onChange, value || '');
-                }}
-                onFocus={() => setFocusedIndex(index)}
-                onBlur={() => setFocusedIndex(null)}
-                keyboardType="numeric"
-                maxLength={1}
-                selectTextOnFocus
-                autoComplete="one-time-code"
-                textContentType="oneTimeCode"
-              />
-            ))}
+            {Array.from({ length }, (_, index) => {
+              const hasValue = value && value[index];
+              const isFocused = focusedIndex === index;
+
+              return (
+                <Animated.View
+                  key={index}
+                  style={{ transform: [{ scale: scaleAnims[index] }] }}
+                  className="flex-1"
+                >
+                  <TextInput
+                    ref={(ref) => {
+                      inputRefs.current[index] = ref;
+                    }}
+                    className={cn(
+                      'h-14 border-2 rounded-xl text-center text-xl font-semibold bg-white',
+                      isFocused && !error
+                        ? 'border-indigo-600 bg-indigo-50/30'
+                        : 'border-gray-200',
+                      error && 'border-rose-500 bg-rose-50/30',
+                      hasValue && !isFocused && !error && 'border-indigo-400'
+                    )}
+                    style={{ 
+                      color: '#1F2937',
+                      shadowColor: isFocused ? (error ? '#f43f5e' : '#6366f1') : 'transparent',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: isFocused ? 0.15 : 0,
+                      shadowRadius: 8,
+                      elevation: isFocused ? 3 : 0,
+                    }}
+                    value={value && value[index] ? value[index] : ''}
+                    onChangeText={(text) =>
+                      handleChangeText(text, index, onChange, value || '')
+                    }
+                    onKeyPress={({ nativeEvent }) => {
+                      handleKeyPress(nativeEvent.key, index, onChange, value || '');
+                    }}
+                    onFocus={() => handleFocus(index)}
+                    onBlur={() => handleBlur(index)}
+                    keyboardType="numeric"
+                    maxLength={1}
+                    selectTextOnFocus
+                    autoComplete="one-time-code"
+                    textContentType="oneTimeCode"
+                  />
+                </Animated.View>
+              );
+            })}
           </View>
 
           {/* Helper Text */}
           {!error && helperText && (
-            <Text className={cn('text-sm text-gray-500 mt-1 text-center', helperTextStyle)}>
+            <Text className={cn('text-sm text-gray-500 mt-2.5 text-center font-normal', helperTextStyle)}>
               {helperText}
             </Text>
           )}
 
           {/* Error Text */}
           {error && (
-            <Text className={cn('text-sm text-error-600 mt-1 text-center', errorTextStyle)}>
-              {error.message}
-            </Text>
+            <View className="flex-row items-center mt-2.5 px-3 py-2 bg-rose-50 rounded-lg border border-rose-200">
+              <Ionicons name="alert-circle" size={16} color="#f43f5e" />
+              <Text className={cn('text-sm text-rose-700 ml-2 font-medium flex-1', errorTextStyle)}>
+                {error.message}
+              </Text>
+            </View>
           )}
         </View>
       )}

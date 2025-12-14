@@ -4,8 +4,8 @@
  * Completely rewritten with stunning UI/UX and enhanced components
  */
 
-import { showErrorToast } from '@/components/feedback/ToastConfig';
 import { useAdminAuth } from '@/stores/admin-auth';
+import { ToastUtils } from '@/utils/toast';
 import { adminLoginSchema } from '@/validations/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -16,13 +16,13 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-    Animated,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    Text,
-    TextInput,
-    View,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -60,11 +60,11 @@ export default function LoginScreen() {
       if (success) {
         router.replace('/(admin)/(tabs)');
       } else {
-        showErrorToast('Login Failed', 'Invalid password or credentials.');
+        ToastUtils.error('auth.loginFailed', 'auth.invalidCredentials', 'Login Failed', 'Invalid password or credentials.');
       }
     } catch (error) {
       console.error('Login error:', error);
-      showErrorToast('Error', 'An unexpected error occurred.');
+      ToastUtils.error('common.error', 'api.errorMessage', 'Error', 'An unexpected error occurred.');
     } finally {
       setIsSubmitting(false);
     }

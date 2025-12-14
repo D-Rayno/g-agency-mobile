@@ -1,4 +1,9 @@
 // components/ui/StatusBadge.tsx
+/**
+ * Enhanced Status Badge Component
+ * Modern design with refined styling and better visual hierarchy
+ */
+
 import { cn } from '@/utils/cn';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
@@ -37,72 +42,82 @@ export const StatusBadge = React.forwardRef<View, StatusBadgeProps>(
       border: string;
       icon: keyof typeof Ionicons.glyphMap;
       label: string;
+      iconColor: string;
     }> = {
       // Event statuses
       draft: {
         bg: 'bg-gray-100',
         text: 'text-gray-700',
         border: 'border-gray-200',
-        icon: 'document-outline',
+        icon: 'document-text-outline',
         label: 'Draft',
+        iconColor: '#374151',
       },
       published: {
-        bg: 'bg-primary-100',
-        text: 'text-primary-700',
-        border: 'border-primary-200',
+        bg: 'bg-indigo-100',
+        text: 'text-indigo-700',
+        border: 'border-indigo-200',
         icon: 'checkmark-circle',
         label: 'Published',
+        iconColor: '#4338ca',
       },
       ongoing: {
-        bg: 'bg-secondary-100',
-        text: 'text-secondary-700',
-        border: 'border-secondary-200',
+        bg: 'bg-teal-100',
+        text: 'text-teal-700',
+        border: 'border-teal-200',
         icon: 'play-circle',
         label: 'Ongoing',
+        iconColor: '#0f766e',
       },
       finished: {
-        bg: 'bg-success-100',
-        text: 'text-success-700',
-        border: 'border-success-200',
+        bg: 'bg-green-100',
+        text: 'text-green-700',
+        border: 'border-green-200',
         icon: 'checkmark-done-circle',
         label: 'Finished',
+        iconColor: '#15803d',
       },
       cancelled: {
-        bg: 'bg-error-100',
-        text: 'text-error-700',
-        border: 'border-error-200',
+        bg: 'bg-rose-100',
+        text: 'text-rose-700',
+        border: 'border-rose-200',
         icon: 'close-circle',
         label: 'Cancelled',
+        iconColor: '#be123c',
       },
       
       // Registration statuses
       pending: {
-        bg: 'bg-warning-100',
-        text: 'text-warning-700',
-        border: 'border-warning-200',
+        bg: 'bg-amber-100',
+        text: 'text-amber-700',
+        border: 'border-amber-200',
         icon: 'time-outline',
         label: 'Pending',
+        iconColor: '#b45309',
       },
       confirmed: {
-        bg: 'bg-success-100',
-        text: 'text-success-700',
-        border: 'border-success-200',
+        bg: 'bg-green-100',
+        text: 'text-green-700',
+        border: 'border-green-200',
         icon: 'checkmark-circle',
         label: 'Confirmed',
+        iconColor: '#15803d',
       },
       attended: {
-        bg: 'bg-secondary-100',
-        text: 'text-secondary-700',
-        border: 'border-secondary-200',
+        bg: 'bg-teal-100',
+        text: 'text-teal-700',
+        border: 'border-teal-200',
         icon: 'checkmark-done',
         label: 'Attended',
+        iconColor: '#0f766e',
       },
       canceled: {
-        bg: 'bg-error-100',
-        text: 'text-error-700',
-        border: 'border-error-200',
+        bg: 'bg-rose-100',
+        text: 'text-rose-700',
+        border: 'border-rose-200',
         icon: 'close-circle',
         label: 'Canceled',
+        iconColor: '#be123c',
       },
     };
 
@@ -111,23 +126,16 @@ export const StatusBadge = React.forwardRef<View, StatusBadgeProps>(
 
     const sizeStyles = {
       sm: {
-        container: 'px-2 py-0.5',
-        text: 'text-2xs',
+        container: 'px-2 py-1',
+        text: 'text-xs',
         icon: 12,
       },
       md: {
-        container: 'px-2.5 py-1',
-        text: 'text-xs',
+        container: 'px-2.5 py-1.5',
+        text: 'text-sm',
         icon: 14,
       },
     };
-
-    const iconColor = config.text.includes('primary') ? '#3730a3'
-      : config.text.includes('secondary') ? '#0f766e'
-      : config.text.includes('success') ? '#15803d'
-      : config.text.includes('warning') ? '#b45309'
-      : config.text.includes('error') ? '#b91c1c'
-      : '#374151';
 
     return (
       <View
@@ -139,13 +147,20 @@ export const StatusBadge = React.forwardRef<View, StatusBadgeProps>(
           sizeStyles[size].container,
           className
         )}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 1,
+          elevation: 1,
+        }}
         {...props}
       >
         {showIcon && (
           <Ionicons
             name={config.icon}
             size={sizeStyles[size].icon}
-            color={iconColor}
+            color={config.iconColor}
             style={{ marginRight: 4 }}
           />
         )}

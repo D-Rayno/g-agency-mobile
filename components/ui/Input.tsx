@@ -1,7 +1,7 @@
 // components/ui/Input.tsx
 /**
- * Ultra-Premium Input Component
- * Enhanced with better styling, animations, and visual feedback
+ * Enhanced Premium Input Component
+ * Modern design with refined styling and smooth interactions
  */
 
 import { cn } from '@/utils/cn';
@@ -50,65 +50,84 @@ export const Input = React.forwardRef<TextInput, InputProps>(
     ref
   ) => {
     const [isFocused, setIsFocused] = useState(false);
-    const [scaleAnim] = useState(new Animated.Value(1));
+    const [borderAnim] = useState(new Animated.Value(0));
 
     const handleFocus = (e: any) => {
       setIsFocused(true);
-      Animated.spring(scaleAnim, {
-        toValue: 1.02,
-        useNativeDriver: true,
-        speed: 50,
+      Animated.spring(borderAnim, {
+        toValue: 1,
+        useNativeDriver: false,
+        speed: 12,
+        bounciness: 8,
       }).start();
       props.onFocus?.(e);
     };
 
     const handleBlur = (e: any) => {
       setIsFocused(false);
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        speed: 50,
+      Animated.spring(borderAnim, {
+        toValue: 0,
+        useNativeDriver: false,
+        speed: 12,
       }).start();
       props.onBlur?.(e);
     };
 
     const variantStyles = {
-      default: 'bg-white border-[3px] border-gray-200',
-      filled: 'bg-gray-50 border-[3px] border-transparent',
-      outline: 'bg-gray-50 border-[3px] border-gray-200',
+      default: 'bg-white border-2 border-gray-200',
+      filled: 'bg-gray-50 border-2 border-transparent',
+      outline: 'bg-white border-2 border-gray-200',
     };
 
     const sizeStyles = {
-      sm: 'px-4 py-3 min-h-[44px] text-sm',
-      md: 'px-5 py-4 min-h-[52px] text-base',
-      lg: 'px-6 py-5 min-h-[60px] text-lg',
+      sm: 'px-3.5 py-2.5 min-h-[42px] text-sm',
+      md: 'px-4 py-3 min-h-[48px] text-base',
+      lg: 'px-5 py-4 min-h-[56px] text-lg',
     };
 
+    const borderColor = borderAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: error ? ['#fca5a5', '#ef4444'] : ['#e5e7eb', '#6366f1'],
+    });
+
     const focusedStyles = isFocused && !error
-      ? 'border-primary-500 bg-primary-50/30 shadow-xl shadow-primary-500/20'
+      ? 'bg-indigo-50/30'
       : '';
     const errorStyles = error
-      ? 'border-error-500 bg-error-50/30 shadow-xl shadow-error-500/20'
+      ? 'border-rose-500 bg-rose-50/30'
       : '';
-    const disabledStyles = isDisabled ? 'opacity-40 bg-gray-100' : '';
+    const disabledStyles = isDisabled ? 'opacity-50 bg-gray-100' : '';
 
     return (
       <View className={cn('w-full', containerClassName)}>
         {label && (
           <Text
             className={cn(
-              'text-sm font-black text-gray-700 uppercase tracking-widest mb-3',
+              'text-sm font-semibold text-gray-700 mb-2',
               labelClassName
             )}
           >
             {label}
-            {isRequired && <Text className="text-error-600 ml-1">*</Text>}
+            {isRequired && <Text className="text-rose-600 ml-1">*</Text>}
           </Text>
         )}
 
         <Animated.View
-          style={{ transform: [{ scale: scaleAnim }] }}
-          className="relative"
+          style={{ 
+            borderColor,
+            shadowColor: isFocused ? (error ? '#ef4444' : '#6366f1') : 'transparent',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: isFocused ? 0.1 : 0,
+            shadowRadius: 8,
+            elevation: isFocused ? 2 : 0,
+          }}
+          className={cn(
+            'rounded-xl relative',
+            variantStyles[variant],
+            focusedStyles,
+            errorStyles,
+            disabledStyles
+          )}
         >
           {leftIcon && (
             <View className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
@@ -123,14 +142,10 @@ export const Input = React.forwardRef<TextInput, InputProps>(
             onBlur={handleBlur}
             placeholderTextColor="#9ca3af"
             className={cn(
-              'rounded-2xl font-semibold text-gray-900',
-              variantStyles[variant],
+              'font-medium text-gray-900',
               sizeStyles[size],
-              focusedStyles,
-              errorStyles,
-              disabledStyles,
-              leftIcon && 'pl-14',
-              rightIcon && 'pr-14',
+              leftIcon && 'pl-12',
+              rightIcon && 'pr-12',
               inputClassName
             )}
             {...props}
@@ -144,16 +159,16 @@ export const Input = React.forwardRef<TextInput, InputProps>(
         </Animated.View>
 
         {error && (
-          <View className="flex-row items-center mt-3 bg-error-50 px-4 py-3 rounded-xl border-2 border-error-200">
-            <Ionicons name="alert-circle" size={18} color="#ef4444" />
-            <Text className="text-sm text-error-700 ml-2 font-bold flex-1">
+          <View className="flex-row items-center mt-2 px-3 py-2 bg-rose-50 rounded-lg border border-rose-200">
+            <Ionicons name="alert-circle" size={16} color="#f43f5e" />
+            <Text className="text-sm text-rose-700 ml-2 font-medium flex-1">
               {error}
             </Text>
           </View>
         )}
 
         {helperText && !error && (
-          <Text className="text-sm text-gray-600 mt-2 font-medium">
+          <Text className="text-sm text-gray-500 mt-2 font-normal">
             {helperText}
           </Text>
         )}

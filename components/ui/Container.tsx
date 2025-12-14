@@ -1,4 +1,9 @@
 // components/ui/Container.tsx
+/**
+ * Enhanced Container Component
+ * Modern design with flexible layout options
+ */
+
 import { cn } from '@/utils/cn';
 import React from 'react';
 import {
@@ -16,6 +21,7 @@ export interface ContainerProps extends ViewProps {
   scroll?: boolean;
   keyboardAware?: boolean;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  backgroundColor?: string;
   className?: string;
 }
 
@@ -27,6 +33,7 @@ export const Container = React.forwardRef<View, ContainerProps>(
       scroll = false,
       keyboardAware = false,
       padding = 'md',
+      backgroundColor = '#F9FAFB',
       className,
       ...props
     },
@@ -34,7 +41,7 @@ export const Container = React.forwardRef<View, ContainerProps>(
   ) => {
     const paddingStyles = {
       none: '',
-      sm: 'p-2',
+      sm: 'p-3',
       md: 'p-4',
       lg: 'p-6',
     };
@@ -43,6 +50,7 @@ export const Container = React.forwardRef<View, ContainerProps>(
       <View
         ref={ref}
         className={cn('flex-1', paddingStyles[padding], className)}
+        style={{ backgroundColor }}
         {...props}
       >
         {children}
@@ -54,19 +62,23 @@ export const Container = React.forwardRef<View, ContainerProps>(
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1"
+          style={{ backgroundColor }}
         >
           {scroll ? (
             <ScrollView
               className="flex-1"
               contentContainerStyle={{ flexGrow: 1 }}
               showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
             >
               <View className={cn(paddingStyles[padding], className)}>
                 {children}
               </View>
             </ScrollView>
           ) : safe ? (
-            <SafeAreaView className="flex-1">{content}</SafeAreaView>
+            <SafeAreaView className="flex-1" style={{ backgroundColor }}>
+              {content}
+            </SafeAreaView>
           ) : (
             content
           )}
@@ -77,7 +89,7 @@ export const Container = React.forwardRef<View, ContainerProps>(
     if (scroll) {
       const ScrollContainer = safe ? SafeAreaView : View;
       return (
-        <ScrollContainer className="flex-1">
+        <ScrollContainer className="flex-1" style={{ backgroundColor }}>
           <ScrollView
             className="flex-1"
             contentContainerStyle={{ flexGrow: 1 }}
@@ -92,7 +104,11 @@ export const Container = React.forwardRef<View, ContainerProps>(
     }
 
     if (safe) {
-      return <SafeAreaView className="flex-1">{content}</SafeAreaView>;
+      return (
+        <SafeAreaView className="flex-1" style={{ backgroundColor }}>
+          {content}
+        </SafeAreaView>
+      );
     }
 
     return content;
@@ -101,13 +117,13 @@ export const Container = React.forwardRef<View, ContainerProps>(
 
 Container.displayName = 'Container';
 
-// Screen Container with common patterns
+// Enhanced Screen Container with common patterns
 export interface ScreenProps extends ContainerProps {
   header?: React.ReactNode;
   footer?: React.ReactNode;
 }
 
-export const Screen = React.forwardRef<View, ScreenProps>(
+export const ScreenContainer = React.forwardRef<View, ScreenProps>(
   ({ children, header, footer, ...props }, ref) => {
     return (
       <Container ref={ref} {...props}>
@@ -119,4 +135,4 @@ export const Screen = React.forwardRef<View, ScreenProps>(
   }
 );
 
-Screen.displayName = 'Screen';
+ScreenContainer.displayName = 'ScreenContainer';

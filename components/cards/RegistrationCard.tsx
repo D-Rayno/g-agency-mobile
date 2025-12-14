@@ -1,12 +1,13 @@
 // components/cards/RegistrationCard.tsx
 /**
- * Registration Card Component
- * Pure NativeWind styling - no theme hooks
+ * Enhanced Registration Card Component
+ * Modern design with refined styling and better visual hierarchy
  */
 
 import { Card, PressableCard } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Registration } from '@/types/admin';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Text, View } from 'react-native';
 
@@ -27,7 +28,14 @@ export function RegistrationCard({
 }: RegistrationCardProps) {
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleString();
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
     } catch {
       return 'Unknown date';
     }
@@ -40,12 +48,17 @@ export function RegistrationCard({
   // Compact version for nested displays
   if (compact) {
     return (
-      <View className="flex-row justify-between items-center py-1.5 px-2 bg-gray-50 rounded-md mb-1">
-        <View className="flex-1">
-          <Text className="text-sm font-semibold text-gray-800">
+      <View className="flex-row justify-between items-center py-2.5 px-3 bg-gray-50 rounded-lg mb-2 border border-gray-100">
+        <View className="flex-1 mr-2">
+          <Text className="text-sm font-semibold text-gray-800" numberOfLines={1}>
             {registration.user?.fullName || 'Unknown User'}
           </Text>
-          <Text className="text-2xs text-gray-500">{formatDate(registration.createdAt)}</Text>
+          <View className="flex-row items-center mt-0.5">
+            <Ionicons name="time-outline" size={12} color="#6b7280" />
+            <Text className="text-xs text-gray-500 ml-1">
+              {formatDate(registration.createdAt)}
+            </Text>
+          </View>
         </View>
         <StatusBadge status={registration.status} size="sm" />
       </View>
@@ -57,48 +70,73 @@ export function RegistrationCard({
   const cardProps = onPress ? { onPress } : {};
 
   return (
-    <CardComponent className="mb-3 p-3" {...cardProps}>
-      <View className="flex-row justify-between items-center">
-        <View className="flex-1 mr-2">
+    <CardComponent className="mb-3" variant="elevated" {...cardProps}>
+      <View className="flex-row justify-between items-start">
+        <View className="flex-1 mr-3">
           {/* Event Name */}
           {showEvent && registration.event && (
-            <Text className="text-base font-semibold text-gray-800" numberOfLines={1}>
-              {registration.event.name || 'Unknown Event'}
-            </Text>
+            <>
+              <Text className="text-base font-bold text-gray-800 mb-1" numberOfLines={2}>
+                {registration.event.name || 'Unknown Event'}
+              </Text>
+              <View className="h-px bg-gray-100 my-2" />
+            </>
           )}
 
-          {/* User Name */}
+          {/* User Info */}
           {showUser && registration.user && (
-            <Text className="text-sm text-gray-600 mt-0.5">
-              {registration.user.fullName || 'Unknown User'}
-            </Text>
+            <View className="flex-row items-center mb-2">
+              <View className="w-10 h-10 rounded-full bg-indigo-100 items-center justify-center mr-2.5">
+                <Ionicons name="person" size={20} color="#6366f1" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-semibold text-gray-800">
+                  {registration.user.fullName || 'Unknown User'}
+                </Text>
+                {registration.user.email && (
+                  <Text className="text-xs text-gray-500 mt-0.5">
+                    {registration.user.email}
+                  </Text>
+                )}
+              </View>
+            </View>
           )}
 
-          {/* Registration Date */}
-          <Text className="text-2xs text-gray-500 mt-1">
-            {formatDate(registration.createdAt)}
-          </Text>
+          {/* Registration Details */}
+          <View className="space-y-1.5">
+            {/* Registration Date */}
+            <View className="flex-row items-center">
+              <Ionicons name="calendar-outline" size={14} color="#6b7280" />
+              <Text className="text-xs text-gray-600 ml-1.5">
+                Registered: {formatDate(registration.createdAt)}
+              </Text>
+            </View>
 
-          {/* Price */}
-          {registration.price !== undefined && registration.price > 0 && (
-            <Text className="text-2xs font-semibold text-primary-600 mt-0.5">
-              {formatPrice(registration.price)}
-            </Text>
-          )}
+            {/* Price */}
+            {registration.price !== undefined && registration.price > 0 && (
+              <View className="flex-row items-center">
+                <Ionicons name="cash-outline" size={14} color="#10b981" />
+                <Text className="text-xs font-semibold text-green-700 ml-1.5">
+                  {formatPrice(registration.price)}
+                </Text>
+              </View>
+            )}
+
+            {/* Attended Info */}
+            {registration.attendedAt && (
+              <View className="flex-row items-center">
+                <Ionicons name="checkmark-circle" size={14} color="#10b981" />
+                <Text className="text-xs text-green-700 ml-1.5">
+                  Attended: {formatDate(registration.attendedAt)}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Status Badge */}
-        <StatusBadge status={registration.status} size="sm" />
+        <StatusBadge status={registration.status} size="md" />
       </View>
-
-      {/* Attended Info */}
-      {registration.attendedAt && (
-        <View className="mt-2 pt-2 border-t border-gray-200">
-          <Text className="text-2xs text-success-700">
-            ✓ Attended: {formatDate(registration.attendedAt)}
-          </Text>
-        </View>
-      )}
     </CardComponent>
   );
 }

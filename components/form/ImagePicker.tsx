@@ -1,28 +1,30 @@
 // components/form/ImagePicker.tsx
 /**
- * Image Picker Component for Profile Photos
- * Pure NativeWind styling - no theme hooks
+ * Enhanced Image Picker Component for Profile Photos
+ * Modern design with smooth animations and refined styling
  */
 
+import { cn } from '@/utils/cn';
 import { Ionicons } from '@expo/vector-icons';
 import * as ExpoImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import {
-    ActionSheetIOS,
-    ActivityIndicator,
-    Alert,
-    AlertButton,
-    Image,
-    Platform,
-    Text,
-    TouchableOpacity,
-    View,
+  ActionSheetIOS,
+  ActivityIndicator,
+  Alert,
+  AlertButton,
+  Animated,
+  Image,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 interface ImagePickerProps {
   value?: string;
   onChange: (image: { uri: string; type: string; base64: string } | null) => void;
-  maxSize?: number; // in MB
+  maxSize?: number;
   required?: boolean;
 }
 
@@ -33,6 +35,7 @@ export function ImagePicker({
   required = false,
 }: ImagePickerProps) {
   const [loading, setLoading] = useState(false);
+  const [scaleAnim] = useState(new Animated.Value(1));
 
   const showImagePickerOptions = () => {
     if (Platform.OS === 'ios') {
@@ -55,7 +58,6 @@ export function ImagePicker({
         }
       );
     } else {
-      // For Android, show a custom alert
       Alert.alert('Select Photo', 'Choose an option', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Camera', onPress: pickImageFromCamera },
@@ -83,7 +85,6 @@ export function ImagePicker({
     try {
       setLoading(true);
 
-      // Request camera permissions
       const cameraPermission =
         await ExpoImagePicker.requestCameraPermissionsAsync();
       if (!cameraPermission.granted) {
@@ -94,7 +95,6 @@ export function ImagePicker({
         return;
       }
 
-      // Launch camera
       const result = await ExpoImagePicker.launchCameraAsync({
         mediaTypes: ExpoImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -116,7 +116,6 @@ export function ImagePicker({
     try {
       setLoading(true);
 
-      // Request media library permissions
       const permissionResult =
         await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permissionResult.granted) {
@@ -127,7 +126,6 @@ export function ImagePicker({
         return;
       }
 
-      // Launch picker
       const result = await ExpoImagePicker.launchImageLibraryAsync({
         mediaTypes: ExpoImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -151,10 +149,9 @@ export function ImagePicker({
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
 
-      // Check file size
       const response = await fetch(asset.uri);
       const blob = await response.blob();
-      const size = blob.size / (1024 * 1024); // Convert to MB
+      const size = blob.size / (1024 * 1024);
 
       if (size > maxSize) {
         Alert.alert(
@@ -164,7 +161,6 @@ export function ImagePicker({
         return;
       }
 
-      // Get file type from uri
       const type = asset.uri.substring(asset.uri.lastIndexOf('.') + 1);
 
       onChange({
@@ -175,36 +171,78 @@ export function ImagePicker({
     }
   };
 
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      speed: 50,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 10,
+    }).start();
+  };
+
   return (
-    <View className="items-center mb-2">
+    <View className="items-center mb-4">
       {/* Image Container */}
-      <TouchableOpacity
-        className="w-30 h-30 rounded-full bg-white justify-center items-center overflow-hidden border border-gray-300"
-        onPress={showImagePickerOptions}
-        disabled={loading}
+      <Animated.View
+        style={{
+          transform: [{ scale: scaleAnim }],
+          shadowColor: '#6366f1',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: value ? 0.15 : 0,
+          shadowRadius: 12,
+          elevation: value ? 4 : 0,
+        }}
       >
-        {loading ? (
-          <ActivityIndicator size="large" color="#4F46E5" />
-        ) : value ? (
-          <Image
-            source={{ uri: value }}
-            className="w-full h-full"
-            resizeMode="cover"
-          />
-        ) : (
-          <View className="opacity-50">
-            <Ionicons name="person-circle-outline" size={60} color="#9CA3AF" />
-          </View>
-        )}
-      </TouchableOpacity>
+        <TouchableOpacity
+          className={cn(
+            'w-32 h-32 rounded-full bg-white justify-center items-center overflow-hidden border-4',
+            value ? 'border-indigo-600' : 'border-gray-200'
+          )}
+          onPress={showImagePickerOptions}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          disabled={loading}
+          activeOpacity={0.8}
+        >
+          {loading ? (
+            <ActivityIndicator size="large" color="#6366f1" />
+          ) : value ? (
+            <Image
+              source={{ uri: value }}
+              className="w-full h-full"
+              resizeMode="cover"
+            />
+          ) : (
+            <View className="items-center">
+              <Ionicons name="camera-outline" size={48} color="#9CA3AF" />
+              <Text className="text-xs text-gray-400 mt-2 font-medium">Add Photo</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
 
       {/* Change/Add Button */}
       <TouchableOpacity
-        className="mt-3 py-2 px-3 rounded-lg bg-primary-100"
+        className={cn(
+          'mt-4 py-2.5 px-5 rounded-xl',
+          value ? 'bg-gray-100' : 'bg-indigo-50'
+        )}
         onPress={showImagePickerOptions}
         disabled={loading}
+        activeOpacity={0.7}
       >
-        <Text className="text-primary-600 text-sm font-medium">
+        <Text className={cn(
+          'text-sm font-semibold',
+          value ? 'text-gray-700' : 'text-indigo-700'
+        )}>
           {value ? 'Change Photo' : 'Add Photo'}
         </Text>
       </TouchableOpacity>
