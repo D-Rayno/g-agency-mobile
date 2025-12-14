@@ -1,16 +1,10 @@
 // utils/toast.ts - Translation Helper for Toasts
-import AppI18nManager from '@/i18n/config';
 import Toast from 'react-native-toast-message';
 
 // Helper function to get translated messages safely
+// Simplified to return fallback or key since i18n is removed
 const t = (key: string, fallback?: string, options?: any): string => {
-  try {
-    const translation = AppI18nManager.translate(key, options);
-    return translation || fallback || key;
-  } catch (error) {
-    console.warn(`Translation failed for key: ${key}`, error);
-    return fallback || key;
-  }
+  return fallback || key;
 };
 
 // Toast utilities with translations
@@ -157,7 +151,7 @@ export const ToastUtils = {
       Toast.show({
         type: 'success',
         text1: t('auth.welcome', 'Welcome'),
-        text2: name 
+        text2: name
           ? t('home.welcome', `Welcome back, ${name}!`, { name })
           : t('home.welcomeUser', 'Welcome back!'),
       });

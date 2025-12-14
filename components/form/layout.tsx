@@ -1,5 +1,5 @@
 // components/form/FormLayout.tsx - Maximum stability form wrapper
-import Card from "@/components/card";
+import { Card } from "@/components/ui";
 import { useTheme } from "@/hooks/use-theme";
 import React, { memo, useCallback, useMemo, useRef } from "react";
 import { FieldValues, FormProvider, useForm, UseFormProps } from "react-hook-form";

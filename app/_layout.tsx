@@ -1,5 +1,5 @@
 // app/_layout.tsx
-import { toastConfig } from '@/components/toast/config';
+import { toastConfig } from '@/components/feedback/ToastConfig';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
@@ -61,11 +61,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(protected)" />
           <Stack.Screen name="(admin)" />
-          <Stack.Screen name="+not-found" />
         </Stack>
         <Toast config={toastConfig} />
       </SafeAreaProvider>

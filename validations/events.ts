@@ -1,37 +1,36 @@
-// validations/event.ts (new file for frontend)
-
+// validations/events.ts
 import * as yup from 'yup';
 
 export const createEventSchema = yup.object({
     name: yup.string()
-        .required('Le nom est obligatoire')
-        .min(3, 'Le nom doit contenir au moins 3 caractères'),
+        .required('Name is required')
+        .min(3, 'Name must be at least 3 characters'),
 
     description: yup.string()
-        .required('La description est obligatoire')
-        .min(10, 'La description doit contenir au moins 10 caractères'),
+        .required('Description is required')
+        .min(10, 'Description must be at least 10 characters'),
 
     startDate: yup.date()
-        .required('La date de début est obligatoire')
-        .min(new Date(), 'La date de début doit être dans le futur'),
+        .required('Start date is required')
+        .min(new Date(), 'Start date must be in the future'),
 
     endDate: yup.date()
-        .required('La date de fin est obligatoire')
-        .min(yup.ref('startDate'), 'La date de fin doit être après la date de début'),
+        .required('End date is required')
+        .min(yup.ref('startDate'), 'End date must be after start date'),
 
     capacity: yup.number()
-        .required('La capacité est obligatoire')
-        .min(1, 'La capacité doit être au moins 1')
-        .integer('La capacité doit être un nombre entier'),
+        .required('Capacity is required')
+        .min(1, 'Capacity must be at least 1')
+        .integer('Capacity must be an integer'),
 
     // Game-specific validation
     eventType: yup.string()
-        .oneOf(['normal', 'game'], 'Type d\'événement invalide'),
+        .oneOf(['normal', 'game'], 'Invalid event type'),
 
     gameType: yup.string()
         .when('eventType', {
             is: 'game',
-            then: (schema) => schema.required('Le type de jeu est obligatoire pour un événement de jeu'),
+            then: (schema) => schema.required('Game type is required for game events'),
             otherwise: (schema) => schema.optional(),
         }),
 
@@ -40,15 +39,15 @@ export const createEventSchema = yup.object({
         .when('allowsTeams', {
             is: true,
             then: (schema) => schema
-                .required('La taille minimale d\'équipe est obligatoire')
-                .min(1, 'La taille minimale d\'équipe doit être au moins 1'),
+                .required('Minimum team size is required')
+                .min(1, 'Minimum team size must be at least 1'),
         }),
 
     maxTeamSize: yup.number()
         .when('allowsTeams', {
             is: true,
             then: (schema) => schema
-                .required('La taille maximale d\'équipe est obligatoire')
-                .min(yup.ref('minTeamSize'), 'La taille maximale doit être >= taille minimale'),
+                .required('Maximum team size is required')
+                .min(yup.ref('minTeamSize'), 'Maximum team size must be >= minimum team size'),
         }),
 });

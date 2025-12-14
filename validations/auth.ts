@@ -1,99 +1,99 @@
-// validations/auth.ts - Updated with i18n support
-import AppI18nManager from "@/i18n/config";
+// validations/auth.ts
 import { useCallback, useState } from "react";
 import * as yup from "yup";
 import zxcvbn from "zxcvbn";
 
-// Get translation function
-const t = AppI18nManager.translate;
-
 export const loginSchema = yup.object({
   username: yup
     .string()
-    .required(() => t("validation.username.required"))
-    .min(3, () => t("validation.username.minLength", { count: 3 }))
+    .required("Username is required")
+    .min(3, "Username must be at least 3 characters")
     .test(
       "is-username-or-email",
-      () => t("validation.username.format"),
+      "Invalid username or email format",
       (value) => {
-        // Username regex: letters, numbers, hyphens, underscores, 3+ characters
         const usernameRegex = /^[a-zA-Z0-9_-]{3,}$/;
-        // Email regex: basic email format validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return usernameRegex.test(value) || emailRegex.test(value);
       }
     ),
   password: yup
     .string()
-    .required(() => t("validation.password.required"))
-    .min(1, () => t("validation.password.required")),
+    .required("Password is required")
+    .min(1, "Password is required"),
+});
+
+export const adminLoginSchema = yup.object({
+  password: yup
+    .string()
+    .required("Password is required"),
 });
 
 export const setPasswordSchema = yup.object().shape({
   newPassword: yup
     .string()
-    .required(() => t("validation.password.required"))
-    .min(8, () => t("validation.password.minLength", { count: 8 }))
-    .matches(/[A-Z]/, () => t("validation.password.uppercase"))
-    .matches(/[a-z]/, () => t("validation.password.lowercase"))
-    .matches(/[0-9]/, () => t("validation.password.number"))
+    .required("Password is required")
+    .min(8, "Password must be at least 8 characters")
+    .matches(/[A-Z]/, "Password must contain an uppercase letter")
+    .matches(/[a-z]/, "Password must contain a lowercase letter")
+    .matches(/[0-9]/, "Password must contain a number")
     .matches(
       /[@$!%*?&]/,
-      () => t("validation.password.special")
+      "Password must contain a special character"
     ),
   confirmPassword: yup
     .string()
-    .required(() => t("validation.password.confirmRequired"))
-    .oneOf([yup.ref("newPassword")], () => t("validation.password.match")),
+    .required("Please confirm your password")
+    .oneOf([yup.ref("newPassword")], "Passwords must match"),
 });
 
 export const forgotPasswordSchema = yup.object({
   username: yup
     .string()
-    .required(() => t("validation.username.required"))
-    .min(3, () => t("validation.username.minLength", { count: 3 })),
+    .required("Username is required")
+    .min(3, "Username must be at least 3 characters"),
 });
 
 export const otpSchema = yup.object({
   otp: yup
     .string()
-    .required(() => t("validation.otp.required"))
-    .matches(/^\d{6}$/, () => t("validation.otp.length"))
-    .length(6, () => t("validation.otp.length")),
+    .required("OTP is required")
+    .matches(/^\d{6}$/, "OTP must be 6 digits")
+    .length(6, "OTP must be 6 digits"),
 });
 
 export const changePasswordSchema = yup.object({
-  currentPassword: yup.string().required(() => t("validation.password.currentRequired")),
+  currentPassword: yup.string().required("Current password is required"),
   newPassword: yup
     .string()
-    .required(() => t("validation.password.required"))
-    .min(8, () => t("validation.password.minLength", { count: 8 }))
-    .matches(/[A-Z]/, () => t("validation.password.uppercase"))
-    .matches(/[a-z]/, () => t("validation.password.lowercase"))
-    .matches(/[0-9]/, () => t("validation.password.number"))
+    .required("New password is required")
+    .min(8, "Password must be at least 8 characters")
+    .matches(/[A-Z]/, "Password must contain an uppercase letter")
+    .matches(/[a-z]/, "Password must contain a lowercase letter")
+    .matches(/[0-9]/, "Password must contain a number")
     .matches(
       /[@$!%*?&]/,
-      () => t("validation.password.special")
+      "Password must contain a special character"
     )
     .notOneOf(
       [yup.ref("currentPassword")],
-      () => t("validation.password.different")
+      "New password must be different from current password"
     ),
   confirmPassword: yup
     .string()
-    .required(() => t("validation.password.confirmRequired"))
-    .oneOf([yup.ref("newPassword")], () => t("validation.password.match")),
+    .required("Please confirm your password")
+    .oneOf([yup.ref("newPassword")], "Passwords must match"),
 });
 
 export const personalInfoSchema = yup.object({
   firstName: yup
     .string()
-    .required(() => t("validation.name.required", { field: t("profile.firstName") }))
-    .min(2, () => t("validation.name.minLength", { field: t("profile.firstName"), count: 2 })),
+    .required("First name is required")
+    .min(2, "First name must be at least 2 characters"),
   lastName: yup
     .string()
-    .required(() => t("validation.name.required", { field: t("profile.lastName") }))
-    .min(2, () => t("validation.name.minLength", { field: t("profile.lastName"), count: 2 })),
+    .required("Last name is required")
+    .min(2, "Last name must be at least 2 characters"),
   dateOfBirth: yup.string().optional(),
   gender: yup
     .string()
@@ -101,7 +101,6 @@ export const personalInfoSchema = yup.object({
     .optional(),
 });
 
-// Schema for partial updates - only validates provided fields
 export const personalInfoUpdateSchema = yup.object({
   firstName: yup
     .string()
@@ -110,8 +109,8 @@ export const personalInfoUpdateSchema = yup.object({
       is: true,
       then: (schema) =>
         schema
-          .required(() => t("validation.name.required", { field: t("profile.firstName") }))
-          .min(2, () => t("validation.name.minLength", { field: t("profile.firstName"), count: 2 })),
+          .required("First name is required")
+          .min(2, "First name must be at least 2 characters"),
       otherwise: (schema) => schema.optional(),
     }),
   lastName: yup
@@ -121,8 +120,8 @@ export const personalInfoUpdateSchema = yup.object({
       is: true,
       then: (schema) =>
         schema
-          .required(() => t("validation.name.required", { field: t("profile.lastName") }))
-          .min(2, () => t("validation.name.minLength", { field: t("profile.lastName"), count: 2 })),
+          .required("Last name is required")
+          .min(2, "Last name must be at least 2 characters"),
       otherwise: (schema) => schema.optional(),
     }),
   phone: yup.string().optional(),
@@ -136,72 +135,56 @@ export const personalInfoUpdateSchema = yup.object({
 export const changeEmailSchema = yup.object({
   email: yup
     .string()
-    .email(() => t("validation.email.invalid"))
-    .required(() => t("validation.email.required")),
+    .email("Invalid email format")
+    .required("Email is required"),
 });
 
 export const changePhoneSchema = yup.object({
   phone: yup
     .string()
-    .required(() => t("validation.phone.required"))
-    .matches(/^\+?[1-9]\d{1,14}$/, () => t("validation.phone.invalid")),
+    .required("Phone number is required")
+    .matches(/^\+?[1-9]\d{1,14}$/, "Invalid phone number"),
 });
 
-// New comprehensive phone validation schema
 export const phoneValidationSchema = yup.object({
   phone: yup
     .string()
-    .required(() => t("validation.phone.required"))
-    .test("phone-format", () => t("validation.phone.invalid"), (value) => {
+    .required("Phone number is required")
+    .test("phone-format", "Invalid phone format", (value) => {
       if (!value) return false;
-
-      // Remove spaces and check if it starts with country code
       const cleanPhone = value.replace(/\s/g, "");
-
-      // Should start with + followed by country code and local number
       const phoneRegex = /^\+\d{1,4}\s?\d{6,12}$/;
       return phoneRegex.test(cleanPhone);
     })
     .test(
       "local-number-length",
-      () => t("validation.phone.localLength"),
+      "Invalid local number length",
       (value) => {
         if (!value) return false;
-
-        // Extract local number (after country code)
         const parts = value.split(" ");
         if (parts.length < 2) return false;
-
         const localNumber = parts.slice(1).join("").replace(/\s/g, "");
         return localNumber.length >= 6 && localNumber.length <= 12;
       }
     ),
 });
 
-// Standalone phone field validation (for use in forms)
 export const phoneFieldValidation = yup
   .string()
-  .required(() => t("validation.phone.required"))
-  .test("phone-format", () => t("validation.phone.invalid"), (value) => {
+  .required("Phone number is required")
+  .test("phone-format", "Invalid phone format", (value) => {
     if (!value) return false;
-
-    // Remove spaces and check if it starts with country code
     const cleanPhone = value.replace(/\s/g, "");
-
-    // Should start with + followed by country code and local number
     const phoneRegex = /^\+\d{1,4}\s?\d{6,12}$/;
     return phoneRegex.test(cleanPhone);
   })
   .test(
     "local-number-length",
-    () => t("validation.phone.localLength"),
+    "Invalid local number length",
     (value) => {
       if (!value) return false;
-
-      // Extract local number (after country code)
       const parts = value.split(" ");
       if (parts.length < 2) return false;
-
       const localNumber = parts.slice(1).join("").replace(/\s/g, "");
       return localNumber.length >= 6 && localNumber.length <= 12;
     }
@@ -210,25 +193,24 @@ export const phoneFieldValidation = yup
 export const setupEmailSchema = yup.object({
   email: yup
     .string()
-    .email(() => t("validation.email.invalid"))
-    .required(() => t("validation.email.required"))
+    .email("Invalid email format")
+    .required("Email is required")
     .matches(
       /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      () => t("validation.email.format")
+      "Invalid email format"
     ),
 });
 
-// Email OTP verification schema
 export const verifyEmailOTPSchema = yup.object({
   otp: yup
     .string()
-    .required(() => t("validation.otp.required"))
-    .matches(/^\d{6}$/, () => t("validation.otp.digits"))
-    .length(6, () => t("validation.otp.length")),
+    .required("OTP is required")
+    .matches(/^\d{6}$/, "OTP must be 6 digits")
+    .length(6, "OTP must be 6 digits"),
 });
 
-// Keep all existing type exports unchanged
 export type LoginFormData = yup.InferType<typeof loginSchema>;
+export type AdminLoginFormData = yup.InferType<typeof adminLoginSchema>;
 export type SetPasswordFormData = yup.InferType<typeof setPasswordSchema>;
 export type ForgotPasswordFormData = yup.InferType<typeof forgotPasswordSchema>;
 export type OTPFormData = yup.InferType<typeof otpSchema>;
@@ -241,12 +223,11 @@ export type PhoneValidationData = yup.InferType<typeof phoneValidationSchema>;
 export type SetupEmailFormData = yup.InferType<typeof setupEmailSchema>;
 export type VerifyEmailOTPFormData = yup.InferType<typeof verifyEmailOTPSchema>;
 
-// Password strength utility
 export const getPasswordStrength = (password: string) => {
   const result = zxcvbn(password);
   const strengthLevels = ["weak", "weak", "fair", "good", "strong"];
   return {
-    score: result.score, // 0-4
+    score: result.score,
     strength: strengthLevels[result.score] as
       | "weak"
       | "fair"
@@ -258,12 +239,10 @@ export const getPasswordStrength = (password: string) => {
   };
 };
 
-// Username validation utility
 export const validateUsernameFormat = (username: string): boolean => {
   return /^[a-zA-Z0-9_-]+$/.test(username);
 };
 
-// Phone formatting and validation utilities
 export const formatPhoneNumber = (
   value: string,
   countryCode: string
@@ -282,7 +261,6 @@ export const validatePhoneNumber = (phone: string): boolean => {
   return phoneRegex.test(cleanPhone);
 };
 
-// Password visibility toggle utility
 export const usePasswordVisibility = () => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -293,7 +271,6 @@ export const usePasswordVisibility = () => {
   return { isVisible, toggle };
 };
 
-// OTP formatting utility
 export const formatOTP = (value: string): string => {
   return value.replace(/\D/g, "").slice(0, 6);
 };

@@ -1,21 +1,22 @@
 // app/(admin)/(tabs)/events.tsx - Complete Event Management
-import { adminApi } from '@/services/admin-api';
+import { adminApi } from '@/services/api/admin-api';
 import { Event } from '@/types/admin';
+import { getImageUrl } from '@/utils/image';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -62,7 +63,7 @@ export default function EventsScreen() {
       });
 
       if (response.success && response.data) {
-        const newEvents = response.data.data;
+        const newEvents = response.data;
         
         if (pageNum === 1) {
           setEvents(newEvents);
@@ -70,7 +71,11 @@ export default function EventsScreen() {
           setEvents(prev => [...prev, ...newEvents]);
         }
 
-        setHasMore(response.data.meta.current_page < response.data.meta.last_page);
+        setHasMore(
+          response.meta?.current_page != null && 
+          response.meta?.last_page != null && 
+          response.meta.current_page < response.meta.last_page
+        );
         setPage(pageNum);
       }
     } catch (error) {
@@ -184,7 +189,7 @@ export default function EventsScreen() {
       <View style={styles.eventImageContainer}>
         {item.imageUrl ? (
           <Image
-            source={{ uri: item.imageUrl }}
+            source={{ uri: getImageUrl(item.imageUrl) || undefined }}
             style={styles.eventImage}
             resizeMode="cover"
           />
@@ -206,12 +211,12 @@ export default function EventsScreen() {
         
         <View style={styles.eventDetails}>
           <View style={styles.detailRow}>
-            <Ionicons name="location-outline" size={16} color="#6B7280" />
+            <Ionicons name="location-outline" size={16} color="#6B7280" style={{ marginRight: 4 }} />
             <Text style={styles.detailText}>{item.province}</Text>
           </View>
           
           <View style={styles.detailRow}>
-            <Ionicons name="calendar-outline" size={16} color="#6B7280" />
+            <Ionicons name="calendar-outline" size={16} color="#6B7280" style={{ marginRight: 4 }} />
             <Text style={styles.detailText}>
               {new Date(item.startDate).toLocaleDateString()}
             </Text>
@@ -221,7 +226,7 @@ export default function EventsScreen() {
         {/* Stats */}
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <Ionicons name="people" size={16} color="#1F6F61" />
+            <Ionicons name="people" size={16} color="#1F6F61" style={{ marginRight: 4 }} />
             <Text style={styles.statText}>
               {item.registeredCount}/{item.capacity}
             </Text>
@@ -229,7 +234,7 @@ export default function EventsScreen() {
           
           {item.eventType === 'game' && (
             <View style={styles.gameTypeBadge}>
-              <Ionicons name="game-controller" size={14} color="#F37021" />
+              <Ionicons name="game-controller" size={14} color="#F37021" style={{ marginRight: 4 }} />
               <Text style={styles.gameTypeText}>{item.gameType}</Text>
             </View>
           )}
@@ -238,7 +243,7 @@ export default function EventsScreen() {
         {/* Actions */}
         <View style={styles.actions}>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, { marginRight: 8 }]}
             onPress={() => router.push(`/(admin)/events/${item.id}/edit`)}
           >
             <Ionicons name="create-outline" size={20} color="#3B82F6" />
@@ -280,12 +285,12 @@ export default function EventsScreen() {
           style={styles.filterButton}
           onPress={() => setShowFilters(!showFilters)}
         >
-          <Ionicons name="filter" size={20} color="#1F6F61" />
+          <Ionicons name="filter" size={20} color="#1F6F61" style={{ marginRight: 6 }} />
           <Text style={styles.filterButtonText}>Filters</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.exportButton}
+          style={[styles.exportButton, { marginRight: 8 }]}
           onPress={() => {
             Alert.alert('Export Format', 'Choose export format', [
               { text: 'CSV', onPress: () => handleExport('csv') },
@@ -315,6 +320,7 @@ export default function EventsScreen() {
                 key={filter.value}
                 style={[
                   styles.filterChip,
+                  { marginRight: 8, marginBottom: 8 },
                   selectedCategory === filter.value && styles.filterChipActive
                 ]}
                 onPress={() => setSelectedCategory(filter.value)}
@@ -336,6 +342,7 @@ export default function EventsScreen() {
                 key={filter.value}
                 style={[
                   styles.filterChip,
+                  { marginRight: 8, marginBottom: 8 },
                   selectedStatus === filter.value && styles.filterChipActive
                 ]}
                 onPress={() => setSelectedStatus(filter.value)}
@@ -353,7 +360,7 @@ export default function EventsScreen() {
       )}
 
       {/* Results Count */}
-      <Text style={styles.resultsCount}>{events.length} events found</Text>
+      <Text style={styles.resultsCount}>{events?.length || 0} events found</Text>
     </View>
   );
 
@@ -453,7 +460,6 @@ const styles = StyleSheet.create({
   },
   actionBar: {
     flexDirection: 'row',
-    gap: 8,
     marginBottom: 12,
   },
   filterButton: {
@@ -461,12 +467,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
     backgroundColor: '#FFFFFF',
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#1F6F61',
+    marginRight: 8,
   },
   filterButtonText: {
     fontSize: 14,
@@ -507,7 +513,6 @@ const styles = StyleSheet.create({
   filterChips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
   },
   filterChip: {
     paddingHorizontal: 12,
@@ -584,13 +589,12 @@ const styles = StyleSheet.create({
   },
   eventDetails: {
     flexDirection: 'row',
-    gap: 16,
     marginBottom: 8,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    marginRight: 16,
   },
   detailText: {
     fontSize: 12,
@@ -599,13 +603,12 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
     marginBottom: 12,
   },
   stat: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    marginRight: 12,
   },
   statText: {
     fontSize: 12,
@@ -615,7 +618,6 @@ const styles = StyleSheet.create({
   gameTypeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
     backgroundColor: '#FFF7ED',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -628,7 +630,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: 8,
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
     paddingTop: 12,

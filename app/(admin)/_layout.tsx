@@ -10,7 +10,7 @@ export default function AdminLayout() {
     const verify = async () => {
       const valid = await checkAuth();
       if (!valid) {
-        router.replace("/(admin)/login");
+        router.replace("/(auth)/login");
       }
     };
 
@@ -24,13 +24,11 @@ export default function AdminLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="(admin)" options={{ headerShown: false }} />
-      <Stack.Screen name="events/[id]" options={{ presentation: "modal" }} />
-      <Stack.Screen name="users/[id]" options={{ presentation: "modal" }} />
-      <Stack.Screen
-        name="registrations/[id]"
-        options={{ presentation: "modal" }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      {/* Detail screens will be implemented next */}
+      {/* <Stack.Screen name="events/[id]" options={{ presentation: "modal" }} /> */}
+      {/* <Stack.Screen name="users/[id]" options={{ presentation: "modal" }} /> */}
+      {/* <Stack.Screen name="registrations/[id]" options={{ presentation: "modal" }} /> */}
     </Stack>
   );
 }
