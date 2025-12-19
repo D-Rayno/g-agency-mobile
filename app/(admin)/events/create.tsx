@@ -1,74 +1,130 @@
 // app/(admin)/events/create.tsx
-import { Badge } from '@/components/ui/Badge';
+/**
+ * Premium Event Creation Form
+ * Refactored with NativeWind, SelectInput, and complete wilaya list
+ */
+
+import { DateInput } from '@/components/form/DateInput';
+import { SelectInput } from '@/components/form/SelectInput';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { BodyText, Caption, Heading2, Heading3 } from '@/components/ui/Typography';
-import { useTheme } from '@/hooks/use-theme';
+import { Input } from '@/components/ui/Input';
+import { Typography } from '@/components/ui/Typography';
+import { WILAYA_OPTIONS } from '@/constants/wilayas';
 import { adminApi } from '@/services/api/admin-api';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import {
     ActivityIndicator,
     Alert,
+    KeyboardAvoidingView,
+    Platform,
     ScrollView,
     Switch,
+    Text,
     TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const PROVINCES = [
-  'Alger', 'Oran', 'Constantine', 'Annaba', 'Blida', 'Batna',
-  'Djelfa', 'Sétif', 'Sidi Bel Abbès', 'Biskra', 'Tébessa', 'El Oued'
+const CATEGORY_OPTIONS = [
+  { label: 'Sport', value: 'sport' },
+  { label: 'Culture', value: 'culture' },
+  { label: 'Game', value: 'game' },
+  { label: 'Workshop', value: 'workshop' },
+  { label: 'Conference', value: 'conference' },
+  { label: 'Music', value: 'music' },
+  { label: 'Art', value: 'art' },
+  { label: 'Technology', value: 'technology' },
 ];
 
-const CATEGORIES = ['sport', 'culture', 'game', 'workshop'];
-const EVENT_TYPES = ['standard', 'game'];
-const GAME_TYPES = ['indoor', 'outdoor', 'board', 'video', 'sports'];
-const DIFFICULTIES = ['easy', 'medium', 'hard', 'extreme'];
-const INTENSITIES = ['low', 'medium', 'high'];
+const EVENT_TYPE_OPTIONS = [
+  { label: 'Standard Event', value: 'standard' },
+  { label: 'Game Event', value: 'game' },
+];
+
+const GAME_TYPE_OPTIONS = [
+  { label: 'Indoor Game', value: 'indoor' },
+  { label: 'Outdoor Game', value: 'outdoor' },
+  { label: 'Board Game', value: 'board' },
+  { label: 'Video Game', value: 'video' },
+  { label: 'Sports Game', value: 'sports' },
+  { label: 'Squid Game', value: 'squid-game' },
+  { label: 'Werewolf', value: 'werewolf' },
+  { label: 'Escape Room', value: 'escape-room' },
+];
+
+const DIFFICULTY_OPTIONS = [
+  { label: 'Easy', value: 'easy' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Hard', value: 'hard' },
+  { label: 'Extreme', value: 'extreme' },
+];
+
+const INTENSITY_OPTIONS = [
+  { label: 'Low', value: 'low' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'High', value: 'high' },
+];
+
+interface FormData {
+  name: string;
+  description: string;
+  category: string;
+  province: string;
+  commune: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  capacity: string;
+  basePrice: string;
+  youthPrice: string;
+  seniorPrice: string;
+  minAge: string;
+  maxAge: string;
+  eventType: string;
+  gameType: string;
+  difficulty: string;
+  physicalIntensity: string;
+  durationMinutes: string;
+}
 
 export default function CreateEventScreen() {
-  const { colors, spacing } = useTheme();
+  const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
+    defaultValues: {
+      name: '',
+      description: '',
+      category: 'sport',
+      province: '16',
+      commune: '',
+      location: '',
+      startDate: '',
+      endDate: '',
+      capacity: '50',
+      basePrice: '0',
+      youthPrice: '',
+      seniorPrice: '',
+      minAge: '18',
+      maxAge: '',
+      eventType: 'standard',
+      gameType: '',
+      difficulty: '',
+      physicalIntensity: '',
+      durationMinutes: '',
+    },
+  });
+
   const [loading, setLoading] = useState(false);
-  
-  // Basic Information
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('sport');
-  const [province, setProvince] = useState('Alger');
-  const [commune, setCommune] = useState('');
-  const [location, setLocation] = useState('');
-  
-  // Dates
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  
-  // Capacity & Pricing
-  const [capacity, setCapacity] = useState('50');
-  const [basePrice, setBasePrice] = useState('0');
-  const [youthPrice, setYouthPrice] = useState('');
-  const [seniorPrice, setSeniorPrice] = useState('');
-  const [minAge, setMinAge] = useState('18');
-  const [maxAge, setMaxAge] = useState('');
-  
-  // Options
   const [isPublic, setIsPublic] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
   const [requiresApproval, setRequiresApproval] = useState(false);
-  
-  // Event Type
-  const [eventType, setEventType] = useState<string>('standard');
-  const [gameType, setGameType] = useState('');
-  const [difficulty, setDifficulty] = useState('');
-  const [durationMinutes, setDurationMinutes] = useState('');
-  const [physicalIntensity, setPhysicalIntensity] = useState('');
-  
-  // Tags
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+
+  const eventType = watch('eventType');
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -81,13 +137,13 @@ export default function CreateEventScreen() {
     setTags(tags.filter(t => t !== tag));
   };
 
-  const handleSubmit = async () => {
+  const onSubmit = async (data: FormData) => {
     // Validation
-    if (!name.trim()) {
+    if (!data.name.trim()) {
       Alert.alert('Error', 'Event name is required');
       return;
     }
-    if (!startDate || !endDate) {
+    if (!data.startDate || !data.endDate) {
       Alert.alert('Error', 'Start and end dates are required');
       return;
     }
@@ -96,20 +152,20 @@ export default function CreateEventScreen() {
 
     try {
       const eventData: any = {
-        name: name.trim(),
-        description: description.trim(),
-        category,
-        province,
-        commune: commune.trim(),
-        location: location.trim(),
-        startDate,
-        endDate,
-        capacity: parseInt(capacity),
-        basePrice: parseFloat(basePrice),
-        youthPrice: youthPrice ? parseFloat(youthPrice) : null,
-        seniorPrice: seniorPrice ? parseFloat(seniorPrice) : null,
-        minAge: parseInt(minAge),
-        maxAge: maxAge ? parseInt(maxAge) : null,
+        name: data.name.trim(),
+        description: data.description.trim(),
+        category: data.category,
+        province: data.province,
+        commune: data.commune.trim(),
+        location: data.location.trim(),
+        startDate: data.startDate,
+        endDate: data.endDate,
+        capacity: parseInt(data.capacity) || 50,
+        basePrice: parseFloat(data.basePrice) || 0,
+        youthPrice: data.youthPrice ? parseFloat(data.youthPrice) : null,
+        seniorPrice: data.seniorPrice ? parseFloat(data.seniorPrice) : null,
+        minAge: parseInt(data.minAge) || 18,
+        maxAge: data.maxAge ? parseInt(data.maxAge) : null,
         isPublic,
         isFeatured,
         requiresApproval,
@@ -118,12 +174,12 @@ export default function CreateEventScreen() {
       };
 
       // Add game-specific fields if event type is game
-      if (eventType === 'game') {
+      if (data.eventType === 'game') {
         eventData.eventType = 'game';
-        eventData.gameType = gameType || null;
-        eventData.difficulty = difficulty || null;
-        eventData.durationMinutes = durationMinutes ? parseInt(durationMinutes) : null;
-        eventData.physicalIntensity = physicalIntensity || null;
+        eventData.gameType = data.gameType || null;
+        eventData.difficulty = data.difficulty || null;
+        eventData.durationMinutes = data.durationMinutes ? parseInt(data.durationMinutes) : null;
+        eventData.physicalIntensity = data.physicalIntensity || null;
       }
 
       const response = await adminApi.createEvent(eventData);
@@ -141,399 +197,381 @@ export default function CreateEventScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: spacing.md,
-        paddingVertical: 12,
-        backgroundColor: colors.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border
-      }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing.sm }}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+      <View className="bg-white px-4 py-3 flex-row items-center border-b border-gray-200">
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          className="w-10 h-10 justify-center items-center mr-2"
+          activeOpacity={0.7}
+        >
+          <Ionicons name="arrow-back" size={24} color="#111827" />
         </TouchableOpacity>
-        <Heading2>Create Event</Heading2>
+        <Typography variant="h5" weight="bold">Create Event</Typography>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: spacing.md }}>
-        {/* Basic Information */}
-        <Card className="mb-4 p-4">
-          <Heading3 className="mb-4">Basic Information</Heading3>
-          
-          <Caption color="gray" className="mb-2">Event Name *</Caption>
-          <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: 8,
-              padding: 12,
-              fontSize: 16,
-              color: colors.text,
-              backgroundColor: colors.surface,
-              marginBottom: spacing.md
-            }}
-            value={name}
-            onChangeText={setName}
-            placeholder="Enter event name"
-            placeholderTextColor={colors.muted}
-          />
-
-          <Caption color="gray" className="mb-2">Description</Caption>
-          <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: 8,
-              padding: 12,
-              fontSize: 16,
-              color: colors.text,
-              backgroundColor: colors.surface,
-              marginBottom: spacing.md,
-              minHeight: 100,
-              textAlignVertical: 'top'
-            }}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Enter event description"
-            placeholderTextColor={colors.muted}
-            multiline
-          />
-
-          <Caption color="gray" className="mb-2">Category *</Caption>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: spacing.md }}>
-            {CATEGORIES.map((cat) => (
-              <TouchableOpacity
-                key={cat}
-                onPress={() => setCategory(cat)}
-                style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: 20,
-                  backgroundColor: category === cat ? colors.primary : colors.border,
-                  marginRight: 8,
-                  marginBottom: 8
-                }}
-              >
-                <Caption style={{ color: category === cat ? '#fff' : colors.text, fontWeight: '600' }}>
-                  {cat.toUpperCase()}
-                </Caption>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Card>
-
-        {/* Location */}
-        <Card className="mb-4 p-4">
-          <Heading3 className="mb-4">Location</Heading3>
-
-          <Caption color="gray" className="mb-2">Province *</Caption>
-          <View style={{
-            borderWidth: 1,
-            borderColor: colors.border,
-            borderRadius: 8,
-            marginBottom: spacing.md,
-            backgroundColor: colors.surface
-          }}>
-            {PROVINCES.map((prov) => (
-              <TouchableOpacity
-                key={prov}
-                onPress={() => setProvince(prov)}
-                style={{
-                  padding: 12,
-                  borderBottomWidth: 1,
-                  borderBottomColor: colors.border,
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                <BodyText>{prov}</BodyText>
-                {province === prov && (
-                  <Ionicons name="checkmark" size={20} color={colors.primary} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Caption color="gray" className="mb-2">Commune *</Caption>
-          <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: 8,
-              padding: 12,
-              fontSize: 16,
-              color: colors.text,
-              backgroundColor: colors.surface,
-              marginBottom: spacing.md
-            }}
-            value={commune}
-            onChangeText={setCommune}
-            placeholder="Enter commune"
-            placeholderTextColor={colors.muted}
-          />
-
-          <Caption color="gray" className="mb-2">Location Address *</Caption>
-          <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: 8,
-              padding: 12,
-              fontSize: 16,
-              color: colors.text,
-              backgroundColor: colors.surface
-            }}
-            value={location}
-            onChangeText={setLocation}
-            placeholder="Enter exact location"
-            placeholderTextColor={colors.muted}
-          />
-        </Card>
-
-        {/* Dates & Capacity */}
-        <Card className="mb-4 p-4">
-          <Heading3 className="mb-4">Dates & Capacity</Heading3>
-
-          <Caption color="gray" className="mb-2">Start Date *</Caption>
-          <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: 8,
-              padding: 12,
-              fontSize: 16,
-              color: colors.text,
-              backgroundColor: colors.surface,
-              marginBottom: spacing.md
-            }}
-            value={startDate}
-            onChangeText={setStartDate}
-            placeholder="YYYY-MM-DD HH:MM:SS"
-            placeholderTextColor={colors.muted}
-          />
-
-          <Caption color="gray" className="mb-2">End Date *</Caption>
-          <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: 8,
-              padding: 12,
-              fontSize: 16,
-              color: colors.text,
-              backgroundColor: colors.surface,
-              marginBottom: spacing.md
-            }}
-            value={endDate}
-            onChangeText={setEndDate}
-            placeholder="YYYY-MM-DD HH:MM:SS"
-            placeholderTextColor={colors.muted}
-          />
-
-          <Caption color="gray" className="mb-2">Capacity *</Caption>
-          <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: 8,
-              padding: 12,
-              fontSize: 16,
-              color: colors.text,
-              backgroundColor: colors.surface
-            }}
-            value={capacity}
-            onChangeText={setCapacity}
-            placeholder="Maximum participants"
-            placeholderTextColor={colors.muted}
-            keyboardType="numeric"
-          />
-        </Card>
-
-        {/* Pricing */}
-        <Card className="mb-4 p-4">
-          <Heading3 className="mb-4">Pricing</Heading3>
-
-          <Caption color="gray" className="mb-2">Base Price (DA) *</Caption>
-          <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: 8,
-              padding: 12,
-              fontSize: 16,
-              color: colors.text,
-              backgroundColor: colors.surface,
-              marginBottom: spacing.md
-            }}
-            value={basePrice}
-            onChangeText={setBasePrice}
-            placeholder="0"
-            placeholderTextColor={colors.muted}
-            keyboardType="numeric"
-          />
-
-          <View style={{ flexDirection: 'row', marginBottom: spacing.md }}>
-            <View style={{ flex: 1, marginRight: spacing.sm }}>
-              <Caption color="gray" className="mb-2">Youth Price (&lt;26)</Caption>
-              <TextInput
-                style={{
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  borderRadius: 8,
-                  padding: 12,
-                  fontSize: 16,
-                  color: colors.text,
-                  backgroundColor: colors.surface
-                }}
-                value={youthPrice}
-                onChangeText={setYouthPrice}
-                placeholder="Optional"
-                placeholderTextColor={colors.muted}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={{ flex: 1 }}>
-              <Caption color="gray" className="mb-2">Senior Price (≥60)</Caption>
-              <TextInput
-                style={{
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  borderRadius: 8,
-                  padding: 12,
-                  fontSize: 16,
-                  color: colors.text,
-                  backgroundColor: colors.surface
-                }}
-                value={seniorPrice}
-                onChangeText={setSeniorPrice}
-                placeholder="Optional"
-                placeholderTextColor={colors.muted}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-
-          <View style={{ flexDirection: 'row' }}>
-            <View style={{ flex: 1, marginRight: spacing.sm }}>
-              <Caption color="gray" className="mb-2">Min Age *</Caption>
-              <TextInput
-                style={{
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  borderRadius: 8,
-                  padding: 12,
-                  fontSize: 16,
-                  color: colors.text,
-                  backgroundColor: colors.surface
-                }}
-                value={minAge}
-                onChangeText={setMinAge}
-                placeholder="18"
-                placeholderTextColor={colors.muted}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={{ flex: 1 }}>
-              <Caption color="gray" className="mb-2">Max Age</Caption>
-              <TextInput
-                style={{
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  borderRadius: 8,
-                  padding: 12,
-                  fontSize: 16,
-                  color: colors.text,
-                  backgroundColor: colors.surface
-                }}
-                value={maxAge}
-                onChangeText={setMaxAge}
-                placeholder="Optional"
-                placeholderTextColor={colors.muted}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-        </Card>
-
-        {/* Options */}
-        <Card className="mb-4 p-4">
-          <Heading3 className="mb-4">Options</Heading3>
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
-            <BodyText>Public Event</BodyText>
-            <Switch value={isPublic} onValueChange={setIsPublic} trackColor={{ true: colors.primary }} />
-          </View>
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
-            <BodyText>Featured Event</BodyText>
-            <Switch value={isFeatured} onValueChange={setIsFeatured} trackColor={{ true: colors.primary }} />
-          </View>
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <BodyText>Requires Approval</BodyText>
-            <Switch value={requiresApproval} onValueChange={setRequiresApproval} trackColor={{ true: colors.primary }} />
-          </View>
-        </Card>
-
-        {/* Tags */}
-        <Card className="mb-4 p-4">
-          <Heading3 className="mb-4">Tags</Heading3>
-
-          <View style={{ flexDirection: 'row', marginBottom: spacing.sm }}>
-            <TextInput
-              style={{
-                flex: 1,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 8,
-                padding: 12,
-                fontSize: 16,
-                color: colors.text,
-                backgroundColor: colors.surface,
-                marginRight: spacing.sm
-              }}
-              value={tagInput}
-              onChangeText={setTagInput}
-              placeholder="Add tag"
-              placeholderTextColor={colors.muted}
-            />
-            <Button onPress={handleAddTag}>Add</Button>
-          </View>
-
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {tags.map((tag) => (
-              <Badge key={tag} variant="secondary" size="sm" style={{ marginRight: 8, marginBottom: 8 }}>
-                {tag}
-                <TouchableOpacity onPress={() => handleRemoveTag(tag)} style={{ marginLeft: 4 }}>
-                  <Ionicons name="close" size={14} color="#fff" />
-                </TouchableOpacity>
-              </Badge>
-            ))}
-          </View>
-        </Card>
-
-        {/* Submit Button */}
-        <Button
-          onPress={handleSubmit}
-          disabled={loading}
-          style={{ marginBottom: spacing.lg }}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1"
+      >
+        <ScrollView 
+          className="flex-1" 
+          contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <Ionicons name="checkmark" size={20} color="#fff" style={{ marginRight: 8 }} />
-              Create Event
-            </>
-          )}
-        </Button>
-      </ScrollView>
+          {/* Basic Information */}
+          <Card className="mb-4 p-4">
+            <Typography variant="h6" weight="bold" className="mb-4">
+              <Ionicons name="information-circle" size={18} color="#4F46E5" /> Basic Information
+            </Typography>
+            
+            <View className="mb-4">
+              <Input
+                label="Event Name"
+                placeholder="Enter event name"
+                value={watch('name')}
+                onChangeText={(text) => setValue('name', text)}
+                isRequired
+                leftIcon={<Ionicons name="calendar" size={18} color="#6b7280" />}
+              />
+            </View>
+
+            <View className="mb-4">
+              <Text className="text-sm font-semibold text-gray-700 mb-2">Description</Text>
+              <TextInput
+                className="border-2 border-gray-200 rounded-xl p-3 bg-white text-base text-gray-900 min-h-[100px]"
+                value={watch('description')}
+                onChangeText={(text) => setValue('description', text)}
+                placeholder="Enter event description"
+                placeholderTextColor="#9ca3af"
+                multiline
+                textAlignVertical="top"
+              />
+            </View>
+
+            <View className="mb-2">
+              <SelectInput
+                control={control}
+                name="category"
+                label="Category"
+                placeholder="Select category"
+                options={CATEGORY_OPTIONS}
+                required
+              />
+            </View>
+          </Card>
+
+          {/* Location */}
+          <Card className="mb-4 p-4">
+            <Typography variant="h6" weight="bold" className="mb-4">
+              <Ionicons name="location" size={18} color="#4F46E5" /> Location
+            </Typography>
+
+            <View className="mb-4">
+              <SelectInput
+                control={control}
+                name="province"
+                label="Province (Wilaya)"
+                placeholder="Select province"
+                options={WILAYA_OPTIONS}
+                required
+                maxDropdownHeight={300}
+              />
+            </View>
+
+            <View className="mb-4">
+              <Input
+                label="Commune"
+                placeholder="Enter commune"
+                value={watch('commune')}
+                onChangeText={(text) => setValue('commune', text)}
+                isRequired
+              />
+            </View>
+
+            <View>
+              <Input
+                label="Location Address"
+                placeholder="Enter exact location"
+                value={watch('location')}
+                onChangeText={(text) => setValue('location', text)}
+                isRequired
+                leftIcon={<Ionicons name="pin" size={18} color="#6b7280" />}
+              />
+            </View>
+          </Card>
+
+          {/* Dates & Capacity */}
+          <Card className="mb-4 p-4">
+            <Typography variant="h6" weight="bold" className="mb-4">
+              <Ionicons name="time" size={18} color="#4F46E5" /> Dates & Capacity
+            </Typography>
+
+            <View className="mb-4">
+              <DateInput
+                control={control}
+                name="startDate"
+                label="Start Date (DD/MM/YYYY)"
+                required
+                validationType="required"
+              />
+            </View>
+
+            <View className="mb-4">
+              <DateInput
+                control={control}
+                name="endDate"
+                label="End Date (DD/MM/YYYY)"
+                required
+                validationType="required"
+              />
+            </View>
+
+            <View>
+              <Input
+                label="Capacity"
+                placeholder="Maximum participants"
+                value={watch('capacity')}
+                onChangeText={(text) => setValue('capacity', text)}
+                keyboardType="numeric"
+                isRequired
+                leftIcon={<Ionicons name="people" size={18} color="#6b7280" />}
+              />
+            </View>
+          </Card>
+
+          {/* Pricing */}
+          <Card className="mb-4 p-4">
+            <Typography variant="h6" weight="bold" className="mb-4">
+              <Ionicons name="cash" size={18} color="#4F46E5" /> Pricing
+            </Typography>
+
+            <View className="mb-4">
+              <Input
+                label="Base Price (DZD)"
+                placeholder="0"
+                value={watch('basePrice')}
+                onChangeText={(text) => setValue('basePrice', text)}
+                keyboardType="numeric"
+                isRequired
+              />
+            </View>
+
+            <View className="flex-row mb-4 gap-3">
+              <View className="flex-1">
+                <Input
+                  label="Youth Price (<26)"
+                  placeholder="Optional"
+                  value={watch('youthPrice')}
+                  onChangeText={(text) => setValue('youthPrice', text)}
+                  keyboardType="numeric"
+                  size="sm"
+                />
+              </View>
+              <View className="flex-1">
+                <Input
+                  label="Senior Price (≥60)"
+                  placeholder="Optional"
+                  value={watch('seniorPrice')}
+                  onChangeText={(text) => setValue('seniorPrice', text)}
+                  keyboardType="numeric"
+                  size="sm"
+                />
+              </View>
+            </View>
+
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <Input
+                  label="Min Age"
+                  placeholder="18"
+                  value={watch('minAge')}
+                  onChangeText={(text) => setValue('minAge', text)}
+                  keyboardType="numeric"
+                  isRequired
+                  size="sm"
+                />
+              </View>
+              <View className="flex-1">
+                <Input
+                  label="Max Age"
+                  placeholder="Optional"
+                  value={watch('maxAge')}
+                  onChangeText={(text) => setValue('maxAge', text)}
+                  keyboardType="numeric"
+                  size="sm"
+                />
+              </View>
+            </View>
+          </Card>
+
+          {/* Event Type */}
+          <Card className="mb-4 p-4">
+            <Typography variant="h6" weight="bold" className="mb-4">
+              <Ionicons name="game-controller" size={18} color="#4F46E5" /> Event Type
+            </Typography>
+
+            <View className="mb-4">
+              <SelectInput
+                control={control}
+                name="eventType"
+                label="Event Type"
+                placeholder="Select type"
+                options={EVENT_TYPE_OPTIONS}
+              />
+            </View>
+
+            {eventType === 'game' && (
+              <>
+                <View className="mb-4">
+                  <SelectInput
+                    control={control}
+                    name="gameType"
+                    label="Game Type"
+                    placeholder="Select game type"
+                    options={GAME_TYPE_OPTIONS}
+                  />
+                </View>
+
+                <View className="mb-4">
+                  <SelectInput
+                    control={control}
+                    name="difficulty"
+                    label="Difficulty Level"
+                    placeholder="Select difficulty"
+                    options={DIFFICULTY_OPTIONS}
+                  />
+                </View>
+
+                <View className="mb-4">
+                  <SelectInput
+                    control={control}
+                    name="physicalIntensity"
+                    label="Physical Intensity"
+                    placeholder="Select intensity"
+                    options={INTENSITY_OPTIONS}
+                  />
+                </View>
+
+                <View>
+                  <Input
+                    label="Duration (minutes)"
+                    placeholder="e.g., 120"
+                    value={watch('durationMinutes')}
+                    onChangeText={(text) => setValue('durationMinutes', text)}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </>
+            )}
+          </Card>
+
+          {/* Options */}
+          <Card className="mb-4 p-4">
+            <Typography variant="h6" weight="bold" className="mb-4">
+              <Ionicons name="settings" size={18} color="#4F46E5" /> Options
+            </Typography>
+
+            <View className="flex-row justify-between items-center mb-4 py-2">
+              <View className="flex-row items-center">
+                <Ionicons name="globe-outline" size={20} color="#6b7280" />
+                <Text className="text-base text-gray-900 font-medium ml-3">Public Event</Text>
+              </View>
+              <Switch 
+                value={isPublic} 
+                onValueChange={setIsPublic} 
+                trackColor={{ false: '#d1d5db', true: '#a5b4fc' }}
+                thumbColor={isPublic ? '#4F46E5' : '#9ca3af'}
+              />
+            </View>
+
+            <View className="flex-row justify-between items-center mb-4 py-2">
+              <View className="flex-row items-center">
+                <Ionicons name="star-outline" size={20} color="#6b7280" />
+                <Text className="text-base text-gray-900 font-medium ml-3">Featured Event</Text>
+              </View>
+              <Switch 
+                value={isFeatured} 
+                onValueChange={setIsFeatured}
+                trackColor={{ false: '#d1d5db', true: '#a5b4fc' }}
+                thumbColor={isFeatured ? '#4F46E5' : '#9ca3af'}
+              />
+            </View>
+
+            <View className="flex-row justify-between items-center py-2">
+              <View className="flex-row items-center">
+                <Ionicons name="checkmark-circle-outline" size={20} color="#6b7280" />
+                <Text className="text-base text-gray-900 font-medium ml-3">Requires Approval</Text>
+              </View>
+              <Switch 
+                value={requiresApproval} 
+                onValueChange={setRequiresApproval}
+                trackColor={{ false: '#d1d5db', true: '#a5b4fc' }}
+                thumbColor={requiresApproval ? '#4F46E5' : '#9ca3af'}
+              />
+            </View>
+          </Card>
+
+          {/* Tags */}
+          <Card className="mb-4 p-4">
+            <Typography variant="h6" weight="bold" className="mb-4">
+              <Ionicons name="pricetag" size={18} color="#4F46E5" /> Tags
+            </Typography>
+
+            <View className="flex-row mb-3 gap-2">
+              <TextInput
+                className="flex-1 border-2 border-gray-200 rounded-xl px-3 py-2.5 bg-white text-base text-gray-900"
+                value={tagInput}
+                onChangeText={setTagInput}
+                placeholder="Add tag"
+                placeholderTextColor="#9ca3af"
+                onSubmitEditing={handleAddTag}
+              />
+              <TouchableOpacity 
+                onPress={handleAddTag}
+                className="bg-primary-600 px-4 rounded-xl justify-center"
+                activeOpacity={0.8}
+              >
+                <Text className="text-white font-bold">Add</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View className="flex-row flex-wrap gap-2">
+              {tags.map((tag) => (
+                <View 
+                  key={tag} 
+                  className="bg-primary-100 px-3 py-1.5 rounded-full flex-row items-center border border-primary-200"
+                >
+                  <Text className="text-primary-700 font-medium text-sm">{tag}</Text>
+                  <TouchableOpacity onPress={() => handleRemoveTag(tag)} className="ml-2">
+                    <Ionicons name="close-circle" size={16} color="#6366f1" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          </Card>
+
+          {/* Submit Button */}
+          <Button
+            onPress={handleSubmit(onSubmit)}
+            isDisabled={loading}
+            fullWidth
+            size="lg"
+            gradient
+            leftIcon={!loading && <Ionicons name="checkmark-circle" size={22} color="white" />}
+          >
+            {loading ? (
+              <View className="flex-row items-center">
+                <ActivityIndicator color="#fff" size="small" />
+                <Text className="text-white font-bold ml-2">Creating...</Text>
+              </View>
+            ) : (
+              'Create Event'
+            )}
+          </Button>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -1,11 +1,13 @@
 // components/cards/UserCard.tsx
 /**
  * Enhanced User Card Component
- * Modern design with refined styling and better visual hierarchy
+ * Modern design with Avatar component integration
  */
 
+import { Avatar } from '@/components/ui/Avatar';
 import { Card, PressableCard } from '@/components/ui/Card';
 import { User } from '@/types/admin';
+import { getImageUrl } from '@/utils/image';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Text, View } from 'react-native';
@@ -17,23 +19,11 @@ export interface UserCardProps {
 }
 
 export function UserCard({ user, onPress, showDetails = true }: UserCardProps) {
-  // Safely extract initials
-  const getInitials = () => {
-    const firstName = user.firstName || '';
-    const lastName = user.lastName || '';
-    const firstInitial = firstName.charAt(0).toUpperCase();
-    const lastInitial = lastName.charAt(0).toUpperCase();
-    const initials = firstInitial + lastInitial;
-    return initials || '?';
-  };
-
-  // Pre-compute display values
   const displayName =
     user.fullName ||
     `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
     'Unnamed User';
   const displayEmail = user.email || 'No email';
-  const initials = getInitials();
 
   const CardComponent = onPress ? PressableCard : Card;
   const cardProps = onPress ? { onPress } : {};
@@ -41,56 +31,31 @@ export function UserCard({ user, onPress, showDetails = true }: UserCardProps) {
   return (
     <CardComponent className="mb-3" variant="elevated" {...cardProps}>
       <View className="flex-row items-start">
-        {/* Avatar Circle with Gradient Border */}
-        <View 
+        <Avatar
+          source={user.avatarUrl ? getImageUrl(user.avatarUrl) || undefined : undefined}
+          name={displayName}
+          size="lg"
           className="mr-3"
-          style={{
-            shadowColor: '#6366f1',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 2,
-          }}
-        >
-          <View className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 justify-center items-center">
-            <View className="w-12 h-12 rounded-full bg-white justify-center items-center">
-              <Text className="text-indigo-600 font-bold text-lg">{initials}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* User Info */}
+          fallbackBgColor="#4F46E5"
+        />
         <View className="flex-1">
           <View className="flex-row items-start justify-between mb-1">
-            <Text className="text-base font-bold text-gray-800 flex-1 mr-2">
-              {displayName}
-            </Text>
-            {/* Verified Badge */}
+            <Text className="text-base font-bold text-gray-800 flex-1 mr-2">{displayName}</Text>
             {user.isEmailVerified && (
               <View className="flex-row items-center bg-green-100 px-2 py-1 rounded-full">
                 <Ionicons name="checkmark-circle" size={14} color="#15803d" />
-                <Text className="text-xs font-semibold text-green-700 ml-1">
-                  Verified
-                </Text>
+                <Text className="text-xs font-semibold text-green-700 ml-1">Verified</Text>
               </View>
             )}
           </View>
-
-          {/* Email */}
           <View className="flex-row items-center mb-1">
             <Ionicons name="mail-outline" size={14} color="#6b7280" />
-            <Text className="text-sm text-gray-600 ml-1.5" numberOfLines={1}>
-              {displayEmail}
-            </Text>
+            <Text className="text-sm text-gray-600 ml-1.5" numberOfLines={1}>{displayEmail}</Text>
           </View>
-
-          {/* Phone Number */}
           {showDetails && user.phoneNumber && (
             <View className="flex-row items-center">
               <Ionicons name="call-outline" size={14} color="#6b7280" />
-              <Text className="text-sm text-gray-600 ml-1.5">
-                {user.phoneNumber}
-              </Text>
+              <Text className="text-sm text-gray-600 ml-1.5">{user.phoneNumber}</Text>
             </View>
           )}
         </View>

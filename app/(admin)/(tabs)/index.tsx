@@ -8,6 +8,8 @@ import { EventCard } from '@/components/cards/EventCard';
 import { RegistrationCard } from '@/components/cards/RegistrationCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Loading } from '@/components/ui/Loading';
+import { BodyText, Caption, Heading1, Heading3, Overline, Typography } from '@/components/ui/Typography';
 import { adminApi } from '@/services/api/admin-api';
 import { AdminStats, Event, Registration } from '@/types/admin';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,12 +17,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    RefreshControl,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -72,9 +72,8 @@ export default function DashboardScreen() {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
-        <ActivityIndicator size="large" color="#4F46E5" />
-        <Text className="text-gray-600 mt-4 text-lg font-semibold">Loading dashboard...</Text>
+      <SafeAreaView className="flex-1 bg-gray-50">
+        <Loading fullScreen text="Loading dashboard..." />
       </SafeAreaView>
     );
   }
@@ -89,12 +88,12 @@ export default function DashboardScreen() {
       >
         {/* Enhanced Premium Header */}
         <View className="px-8 pt-8 pb-6">
-          <Text className="text-5xl font-black text-gray-900 tracking-tighter mb-2">
+          <Heading1 className="tracking-tighter mb-2">
             Dashboard
-          </Text>
-          <Text className="text-lg text-gray-600 font-semibold">
+          </Heading1>
+          <BodyText color="gray" weight="semibold">
             Welcome back! Here's your overview
-          </Text>
+          </BodyText>
         </View>
 
         {/* Enhanced KPI Cards Grid */}
@@ -118,12 +117,12 @@ export default function DashboardScreen() {
                   </View>
                   <Ionicons name="arrow-forward-circle" size={24} color="rgba(255,255,255,0.7)" />
                 </View>
-                <Text className="text-6xl font-black text-white mb-2">
+                <Typography variant="h1" weight="black" color="white" className="mb-2" numberOfLines={1} adjustsFontSizeToFit>
                   {stats?.events.total || 0}
-                </Text>
-                <Text className="text-base font-bold text-white/95 tracking-wide">
+                </Typography>
+                <Overline color="white" className="opacity-95">
                   TOTAL EVENTS
-                </Text>
+                </Overline>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -145,12 +144,12 @@ export default function DashboardScreen() {
                   </View>
                   <Ionicons name="arrow-forward-circle" size={24} color="rgba(255,255,255,0.7)" />
                 </View>
-                <Text className="text-6xl font-black text-white mb-2">
+                <Typography variant="h1" weight="black" color="white" className="mb-2" numberOfLines={1} adjustsFontSizeToFit>
                   {stats?.users.active || 0}
-                </Text>
-                <Text className="text-base font-bold text-white/95 tracking-wide">
+                </Typography>
+                <Overline color="white" className="opacity-95">
                   ACTIVE USERS
-                </Text>
+                </Overline>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -174,12 +173,12 @@ export default function DashboardScreen() {
                   </View>
                   <Ionicons name="arrow-forward-circle" size={24} color="rgba(255,255,255,0.7)" />
                 </View>
-                <Text className="text-6xl font-black text-white mb-2">
+                <Typography variant="h1" weight="black" color="white" className="mb-2" numberOfLines={1} adjustsFontSizeToFit>
                   {stats?.registrations.total || 0}
-                </Text>
-                <Text className="text-base font-bold text-white/95 tracking-wide">
+                </Typography>
+                <Overline color="white" className="opacity-95">
                   REGISTRATIONS
-                </Text>
+                </Overline>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -196,12 +195,12 @@ export default function DashboardScreen() {
                     <Ionicons name="cash" size={28} color="#ffffff" />
                   </View>
                 </View>
-                <Text className="text-6xl font-black text-white mb-2">
-                  ${((stats?.registrations.total || 0) * 12.5).toFixed(0)}
-                </Text>
-                <Text className="text-base font-bold text-white/95 tracking-wide">
-                  REVENUE (EST.)
-                </Text>
+                <Typography variant="h2" weight="black" color="white" className="mb-2" numberOfLines={1} adjustsFontSizeToFit>
+                  {((stats?.registrations.total || 0) * 12.5).toLocaleString()}
+                </Typography>
+                <Overline color="white" className="opacity-95">
+                  REVENUE (DZD)
+                </Overline>
               </LinearGradient>
             </View>
           </View>
@@ -212,30 +211,30 @@ export default function DashboardScreen() {
           <Card variant="elevated" className="p-6">
             <View className="flex-row justify-around">
               <View className="items-center">
-                <Text className="text-3xl font-black text-primary-700 mb-1">
+                <Heading3 className="text-primary-700 mb-1">
                   {stats?.events.published || 0}
-                </Text>
-                <Text className="text-xs text-gray-600 font-bold uppercase tracking-wider">
+                </Heading3>
+                <Caption weight="bold" className="uppercase tracking-wider">
                   Published
-                </Text>
+                </Caption>
               </View>
               <View className="w-px h-12 bg-gray-200" />
               <View className="items-center">
-                <Text className="text-3xl font-black text-warning-700 mb-1">
+                <Heading3 className="text-warning-700 mb-1">
                   {stats?.events.ongoing || 0}
-                </Text>
-                <Text className="text-xs text-gray-600 font-bold uppercase tracking-wider">
+                </Heading3>
+                <Caption weight="bold" className="uppercase tracking-wider">
                   Ongoing
-                </Text>
+                </Caption>
               </View>
               <View className="w-px h-12 bg-gray-200" />
               <View className="items-center">
-                <Text className="text-3xl font-black text-success-700 mb-1">
+                <Heading3 className="text-success-700 mb-1">
                   {stats?.registrations.confirmed || 0}
-                </Text>
-                <Text className="text-xs text-gray-600 font-bold uppercase tracking-wider">
+                </Heading3>
+                <Caption weight="bold" className="uppercase tracking-wider">
                   Confirmed
-                </Text>
+                </Caption>
               </View>
             </View>
           </Card>
@@ -243,7 +242,7 @@ export default function DashboardScreen() {
 
         {/* Enhanced Quick Actions */}
         <View className="px-8 pb-8">
-          <Text className="text-2xl font-extrabold text-gray-900 mb-4">Quick Actions</Text>
+          <Heading3 className="mb-4">Quick Actions</Heading3>
           <View className="flex-row gap-4">
             <Button
               variant="primary"
@@ -253,7 +252,7 @@ export default function DashboardScreen() {
               className="flex-1"
               leftIcon={<Ionicons name="add-circle" size={24} color="#ffffff" />}
             >
-              <Text className="font-bold">New Event</Text>
+              New Event
             </Button>
 
             <Button
@@ -264,7 +263,7 @@ export default function DashboardScreen() {
               className="flex-1"
               leftIcon={<Ionicons name="qr-code" size={24} color="#ffffff" />}
             >
-              <Text className="font-bold">Scan QR</Text>
+              Scan QR
             </Button>
           </View>
         </View>
@@ -272,9 +271,9 @@ export default function DashboardScreen() {
         {/* Recent Events */}
         <View className="px-8 pb-8">
           <View className="flex-row justify-between items-center mb-5">
-            <Text className="text-2xl font-extrabold text-gray-900">Recent Events</Text>
+            <Heading3>Recent Events</Heading3>
             <TouchableOpacity onPress={() => router.push('/(admin)/(tabs)/events')}>
-              <Text className="text-base font-bold text-primary-600">View All →</Text>
+              <BodyText weight="bold" color="primary">View All →</BodyText>
             </TouchableOpacity>
           </View>
 
@@ -289,7 +288,7 @@ export default function DashboardScreen() {
           ) : (
             <Card variant="elevated" className="p-10 items-center">
               <Ionicons name="calendar-outline" size={56} color="#d1d5db" />
-              <Text className="text-gray-500 mt-3 font-semibold">No recent events</Text>
+              <BodyText color="gray" weight="semibold" className="mt-3">No recent events</BodyText>
             </Card>
           )}
         </View>
@@ -297,9 +296,9 @@ export default function DashboardScreen() {
         {/* Recent Registrations */}
         <View className="px-8 pb-10">
           <View className="flex-row justify-between items-center mb-5">
-            <Text className="text-2xl font-extrabold text-gray-900">Recent Registrations</Text>
+            <Heading3>Recent Registrations</Heading3>
             <TouchableOpacity onPress={() => router.push('/(admin)/(tabs)/registrations')}>
-              <Text className="text-base font-bold text-primary-600">View All →</Text>
+              <BodyText weight="bold" color="primary">View All →</BodyText>
             </TouchableOpacity>
           </View>
 
@@ -314,7 +313,7 @@ export default function DashboardScreen() {
           ) : (
             <Card variant="elevated" className="p-10 items-center">
               <Ionicons name="ticket-outline" size={56} color="#d1d5db" />
-              <Text className="text-gray-500 mt-3 font-semibold">No recent registrations</Text>
+              <BodyText color="gray" weight="semibold" className="mt-3">No recent registrations</BodyText>
             </Card>
           )}
         </View>

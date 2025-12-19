@@ -1,5 +1,6 @@
 // app/_layout.tsx
 import { toastConfig } from '@/components/feedback/ToastConfig';
+import "@/global.css";
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';

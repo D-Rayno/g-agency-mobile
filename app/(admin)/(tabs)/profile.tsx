@@ -5,12 +5,13 @@
  */
 
 import { Card } from '@/components/ui/Card';
+import { BodyText, Caption, Heading1, Heading3, Typography } from '@/components/ui/Typography';
 import { useAdminAuth } from '@/stores/admin-auth';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
@@ -46,25 +47,25 @@ export default function ProfileScreen() {
           colors={['#4F46E5', '#6366f1', '#818cf8']}
           className="px-8 pt-8 pb-16 mb-8"
         >
-          <Text className="text-5xl font-black text-white tracking-tighter mb-3">
+          <Heading1 color="white" className="tracking-tighter mb-3">
             Profile
-          </Text>
-          <Text className="text-lg text-white/90 font-semibold">
+          </Heading1>
+          <BodyText color="white" weight="semibold" className="opacity-90">
             Manage your admin account
-          </Text>
+          </BodyText>
 
           {/* Enhanced Large Avatar */}
           <View className="items-center mt-12">
             <View className="w-36 h-36 rounded-[32px] bg-white/25 backdrop-blur-2xl items-center justify-center border-[3px] border-white/40 shadow-2xl">
               <Ionicons name="shield-checkmark" size={72} color="#ffffff" />
             </View>
-            <Text className="text-3xl font-black text-white mt-6">
+            <Heading3 color="white" className="mt-6">
               Admin User
-            </Text>
+            </Heading3>
             <View className="mt-3 bg-white/20 px-6 py-2.5 rounded-full border border-white/30">
-              <Text className="text-base text-white/95 font-bold tracking-wide">
+              <BodyText color="white" weight="bold" className="tracking-wide opacity-95">
                 G-Agency Events Admin
-              </Text>
+              </BodyText>
             </View>
           </View>
         </LinearGradient>
@@ -73,20 +74,20 @@ export default function ProfileScreen() {
         <View className="px-8">
           {/* App Information */}
           <View className="mb-8">
-            <Text className="text-sm font-black text-gray-500 uppercase tracking-widest mb-4 px-2">
+            <Caption weight="black" className="uppercase tracking-widest mb-4 px-2">
               App Information
-            </Text>
+            </Caption>
             <Card variant="elevated" className="p-0 overflow-hidden">
               <View className="px-6 py-5 flex-row justify-between items-center border-b-2 border-gray-100">
                 <View className="flex-row items-center flex-1">
                   <View className="w-12 h-12 rounded-2xl bg-primary-100 items-center justify-center mr-4">
                     <Ionicons name="information-circle" size={24} color="#4F46E5" />
                   </View>
-                  <Text className="text-lg text-gray-700 font-semibold">Version</Text>
+                  <BodyText color="gray" weight="semibold">Version</BodyText>
                 </View>
-                <Text className="text-lg font-black text-gray-900">
+                <Typography variant="body" weight="black">
                   {Constants.expoConfig?.version || '1.0.0'}
-                </Text>
+                </Typography>
               </View>
               
               <View className="px-6 py-5 flex-row justify-between items-center">
@@ -94,22 +95,22 @@ export default function ProfileScreen() {
                   <View className="w-12 h-12 rounded-2xl bg-secondary-100 items-center justify-center mr-4">
                     <Ionicons name="code-slash" size={24} color="#14B8A6" />
                   </View>
-                  <Text className="text-lg text-gray-700 font-semibold">Build Number</Text>
+                  <BodyText color="gray" weight="semibold">Build Number</BodyText>
                 </View>
-                <Text className="text-lg font-black text-gray-900">
+                <Typography variant="body" weight="black">
                   {Constants.expoConfig?.android?.versionCode || 
                    Constants.expoConfig?.ios?.buildNumber || 
                    '1'}
-                </Text>
+                </Typography>
               </View>
             </Card>
           </View>
 
           {/* Account Actions */}
           <View className="mb-8">
-            <Text className="text-sm font-black text-gray-500 uppercase tracking-widest mb-4 px-2">
+            <Caption weight="black" className="uppercase tracking-widest mb-4 px-2">
               Account Actions
-            </Text>
+            </Caption>
             <View className="gap-4">
               {/* Logout Button */}
               <TouchableOpacity
@@ -123,10 +124,10 @@ export default function ProfileScreen() {
                         <Ionicons name="log-out" size={28} color="#f59e0b" />
                       </View>
                       <View>
-                        <Text className="text-xl font-extrabold text-gray-900">Logout</Text>
-                        <Text className="text-sm text-gray-600 mt-1 font-medium">
+                        <Typography variant="h5" weight="extrabold">Logout</Typography>
+                        <Caption color="gray" className="mt-1">
                           Sign out from this device
-                        </Text>
+                        </Caption>
                       </View>
                     </View>
                     <Ionicons name="chevron-forward" size={26} color="#d1d5db" />
@@ -146,12 +147,12 @@ export default function ProfileScreen() {
                         <Ionicons name="exit" size={28} color="#ef4444" />
                       </View>
                       <View>
-                        <Text className="text-xl font-extrabold text-error-700">
+                        <Typography variant="h5" weight="extrabold" color="error">
                           Logout All Devices
-                        </Text>
-                        <Text className="text-sm text-gray-600 mt-1 font-medium">
+                        </Typography>
+                        <Caption color="gray" className="mt-1">
                           Sign out everywhere
-                        </Text>
+                        </Caption>
                       </View>
                     </View>
                     <Ionicons name="chevron-forward" size={26} color="#fca5a5" />
@@ -168,12 +169,12 @@ export default function ProfileScreen() {
                 <Ionicons name="shield-checkmark" size={26} color="#4F46E5" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-extrabold text-primary-900 mb-2">
+                <Typography variant="body" weight="extrabold" className="text-primary-900 mb-2">
                   Security Notice
-                </Text>
-                <Text className="text-sm text-primary-800 leading-6 font-medium">
+                </Typography>
+                <Caption className="text-primary-800 leading-6">
                   Your admin session is secured with end-to-end encryption. Always logout when using shared devices.
-                </Text>
+                </Caption>
               </View>
             </View>
           </Card>

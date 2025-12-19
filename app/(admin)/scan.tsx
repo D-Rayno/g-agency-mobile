@@ -109,58 +109,62 @@ export default function QRScannerScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-black">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
-        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 justify-center">
-          <Ionicons name="arrow-back" size={24} color="#111827" />
-        </TouchableOpacity>
-        <Heading3>Scan QR Code</Heading3>
-        <View className="w-10" />
-      </View>
+      <SafeAreaView edges={['top']} className="bg-black">
+        <View className="flex-row items-center justify-between px-4 py-3">
+          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 justify-center">
+            <Ionicons name="arrow-back" size={24} color="#ffffff" />
+          </TouchableOpacity>
+          <Heading3 color="white">Scan QR Code</Heading3>
+          <View className="w-10" />
+        </View>
+      </SafeAreaView>
 
       {/* Camera View */}
-      <View className="flex-1">
-        <CameraView
-          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-          className="flex-1"
-          barcodeScannerSettings={{
-            barcodeTypes: ['qr'],
-          }}
-        >
-          {/* Scanning Overlay */}
-          <View className="flex-1">
-            <View className="flex-1 bg-black/60" />
-            <View className="flex-row flex-[1.5]">
-              <View className="flex-1 bg-black/60" />
-              <View 
-                className="flex-[6] border-2 rounded-2xl relative"
-                style={{ borderColor: scanned ? '#10B981' : '#1F6F61' }}
-              >
-                {!scanned && (
-                  <View className="flex-1 justify-center items-center">
-                    <View className="w-[90%] h-0.5 bg-primary-600 opacity-80" />
-                  </View>
-                )}
-                {scanned && (
-                  <View className="flex-1 justify-center items-center bg-white/10">
-                    <Ionicons name="checkmark-circle" size={48} color="#10B981" />
-                  </View>
-                )}
-              </View>
-              <View className="flex-1 bg-black/60" />
+      <CameraView
+        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        style={{ flex: 1 }}
+        barcodeScannerSettings={{
+          barcodeTypes: ['qr'],
+        }}
+      >
+        {/* Scanning Overlay */}
+        <View className="flex-1">
+          <View className="flex-1 bg-black/50" />
+          <View className="flex-row" style={{ flex: 1.5 }}>
+            <View className="flex-1 bg-black/50" />
+            <View 
+              className="rounded-2xl relative"
+              style={{ 
+                flex: 6, 
+                borderWidth: 2, 
+                borderColor: scanned ? '#10B981' : '#4F46E5' 
+              }}
+            >
+              {!scanned && (
+                <View className="flex-1 justify-center items-center">
+                  <View className="w-[90%] h-0.5 bg-primary-600 opacity-80" />
+                </View>
+              )}
+              {scanned && (
+                <View className="flex-1 justify-center items-center bg-white/10">
+                  <Ionicons name="checkmark-circle" size={48} color="#10B981" />
+                </View>
+              )}
             </View>
-            <View className="flex-1 bg-black/60" />
+            <View className="flex-1 bg-black/50" />
           </View>
+          <View className="flex-1 bg-black/50" />
+        </View>
 
-          {/* Instructions */}
-          <View className="absolute bottom-24 left-0 right-0 items-center">
-            <Text className="text-base font-semibold text-white text-center px-6 py-3 bg-black/70 rounded-lg">
-              {scanned ? 'QR Code Scanned' : 'Position QR code within the frame'}
-            </Text>
-          </View>
-        </CameraView>
-      </View>
+        {/* Instructions */}
+        <View className="absolute bottom-24 left-0 right-0 items-center">
+          <Text className="text-base font-semibold text-white text-center px-6 py-3 bg-black/70 rounded-lg">
+            {scanned ? 'QR Code Scanned' : 'Position QR code within the frame'}
+          </Text>
+        </View>
+      </CameraView>
 
       {/* Registration Details */}
       {registrationData && (
@@ -232,6 +236,6 @@ export default function QRScannerScreen() {
           </Card>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }

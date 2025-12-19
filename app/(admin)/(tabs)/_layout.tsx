@@ -11,7 +11,7 @@ export default function AdminTabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#1F6F61',
+        tabBarActiveTintColor: '#4F46E5',
         tabBarInactiveTintColor: '#9CA3AF',
         headerShown: false,
         tabBarStyle: {

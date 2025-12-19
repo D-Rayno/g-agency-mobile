@@ -1,9 +1,15 @@
 // app/(admin)/(tabs)/events.tsx
 /**
- * Ultra-Premium Events List
- * Enhanced with better spacing, colors, and component usage
+ * Premium Events List
+ * Enhanced with better data display and reduced padding
  */
 
+import { Card } from '@/components/ui/Card';
+import { FilterChip } from '@/components/ui/FilterChip';
+import { Loading } from '@/components/ui/Loading';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { BodyText, Heading1, Typography } from '@/components/ui/Typography';
 import { adminApi } from '@/services/api/admin-api';
 import { Event } from '@/types/admin';
 import { getImageUrl } from '@/utils/image';
@@ -13,13 +19,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     FlatList,
     Image,
     RefreshControl,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -137,239 +141,232 @@ export default function EventsScreen() {
     );
   }, [loadEvents]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'draft': return '#6B7280';
-      case 'published': return '#4F46E5';
-      case 'ongoing': return '#f59e0b';
-      case 'finished': return '#22c55e';
-      case 'cancelled': return '#ef4444';
-      default: return '#6B7280';
-    }
+  const formatPrice = (price: number | null | undefined) => {
+    if (price === null || price === undefined || price === 0) return 'Free';
+    return `${price.toLocaleString()} DZD`;
   };
 
-  const getStatusBgColor = (status: string) => {
-    switch (status) {
-      case 'draft': return '#F3F4F6';
-      case 'published': return '#EEF2FF';
-      case 'ongoing': return '#FEF3C7';
-      case 'finished': return '#D1FAE5';
-      case 'cancelled': return '#FEE2E2';
-      default: return '#F3F4F6';
+  const formatDateRange = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const sameDay = start.toDateString() === end.toDateString();
+    
+    if (sameDay) {
+      return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • ${start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
     }
+    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   };
 
-  const renderEventCard = ({ item }: { item: Event }) => (
-    <TouchableOpacity
-      className="mb-5"
-      onPress={() => router.push(`/(admin)/events/${item.id}`)}
-      activeOpacity={0.9}
-    >
-      {/* Enhanced Hero Card */}
-      <View className="bg-white rounded-[28px] overflow-hidden shadow-2xl border-2 border-gray-50">
-        {/* Large Event Image - 70% height */}
-        <View className="relative h-80">
-          {item.imageUrl ? (
-            <Image
-              source={{ uri: getImageUrl(item.imageUrl) || undefined }}
-              className="w-full h-full"
-              resizeMode="cover"
-            />
-          ) : (
+  const renderEventCard = ({ item }: { item: Event }) => {
+    const registeredCount = item.registeredCount ?? 0;
+    const capacity = item.capacity ?? 1;
+    const capacityPercent = capacity > 0 ? Math.min((registeredCount / capacity) * 100, 100) : 0;
+    
+    return (
+      <TouchableOpacity
+        className="mb-4"
+        onPress={() => router.push(`/(admin)/events/${item.id}`)}
+        activeOpacity={0.9}
+      >
+        <Card variant="elevated" className="overflow-hidden">
+          {/* Event Image - Reduced height */}
+          <View className="relative h-44">
+            {item.imageUrl ? (
+              <Image
+                source={{ uri: getImageUrl(item.imageUrl) || undefined }}
+                className="w-full h-full"
+                resizeMode="cover"
+              />
+            ) : (
+              <LinearGradient
+                colors={['#4F46E5', '#6366f1', '#818cf8']}
+                className="w-full h-full justify-center items-center"
+              >
+                <MaterialIcons name="event" size={48} color="rgba(255,255,255,0.25)" />
+              </LinearGradient>
+            )}
+            
+            {/* Dark Gradient */}
             <LinearGradient
-              colors={['#4F46E5', '#6366f1', '#818cf8']}
-              className="w-full h-full justify-center items-center"
-            >
-              <MaterialIcons name="event" size={80} color="rgba(255,255,255,0.25)" />
-            </LinearGradient>
-          )}
-          
-          {/* Enhanced Dark Gradient */}
-          <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.9)']}
-            className="absolute bottom-0 left-0 right-0 h-40"
-          />
-          
-          {/* Enhanced Status Badge */}
-          <View 
-            className="absolute top-5 right-5 px-5 py-3 rounded-2xl shadow-xl"
-            style={{ backgroundColor: getStatusBgColor(item.status) }}
-          >
-            <Text 
-              className="text-xs font-black uppercase tracking-widest"
-              style={{ color: getStatusColor(item.status) }}
-            >
-              {item.status}
-            </Text>
-          </View>
+              colors={['transparent', 'rgba(0,0,0,0.8)']}
+              className="absolute bottom-0 left-0 right-0 h-24"
+            />
+            
+            {/* Status Badge - Compact */}
+            <View className="absolute top-3 right-3">
+              <StatusBadge status={item.status as any} />
+            </View>
 
-          {/* Enhanced Title Overlay */}
-          <View className="absolute bottom-0 left-0 right-0 p-7">
-            <Text className="text-3xl font-black text-white mb-3 shadow-2xl">
-              {item.name}
-            </Text>
-            <View className="flex-row items-center">
-              <Ionicons name="calendar" size={18} color="#ffffff" />
-              <Text className="text-base font-bold text-white/95 ml-2">
-                {new Date(item.startDate).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric',
-                  year: 'numeric'
-                })}
-              </Text>
-              <View className="mx-3 w-1.5 h-1.5 rounded-full bg-white/70" />
-              <Ionicons name="location" size={18} color="#ffffff" />
-              <Text className="text-base font-bold text-white/95 ml-1.5">
-                {item.province}
+            {/* Category Badge */}
+            <View className="absolute top-3 left-3 bg-white/90 px-2.5 py-1 rounded-lg">
+              <Text className="text-xs font-bold text-gray-800 uppercase">{item.category}</Text>
+            </View>
+
+            {/* Title Overlay */}
+            <View className="absolute bottom-0 left-0 right-0 p-4">
+              <Text className="text-lg font-bold text-white" numberOfLines={1}>
+                {item.name}
               </Text>
             </View>
           </View>
-        </View>
 
-        {/* Enhanced Info Section */}
-        <View className="p-7">
-          {/* Stats Row */}
-          <View className="flex-row items-center justify-between mb-5">
-            <View className="flex-row items-center">
-              <View className="bg-primary-50 rounded-2xl px-5 py-3 flex-row items-center border-2 border-primary-100">
-                <Ionicons name="people" size={20} color="#4F46E5" />
-                <Text className="text-lg font-black text-primary-700 ml-2.5">
-                  {item.registeredCount}/{item.capacity}
+          {/* Info Section - Compact */}
+          <View className="p-4">
+            {/* Date & Location Row */}
+            <View className="flex-row items-center mb-3">
+              <View className="flex-row items-center flex-1">
+                <Ionicons name="calendar-outline" size={14} color="#6b7280" />
+                <Text className="text-xs text-gray-600 font-medium ml-1.5" numberOfLines={1}>
+                  {formatDateRange(item.startDate, item.endDate)}
                 </Text>
+              </View>
+              <View className="flex-row items-center">
+                <Ionicons name="location-outline" size={14} color="#6b7280" />
+                <Text className="text-xs text-gray-600 font-medium ml-1">{item.province}</Text>
               </View>
             </View>
 
-            {item.eventType === 'game' && item.gameType && (
-              <View className="bg-warning-50 rounded-2xl px-5 py-3 flex-row items-center border-2 border-warning-100">
-                <Ionicons name="game-controller" size={18} color="#f59e0b" />
-                <Text className="text-sm font-black text-warning-700 ml-2">
-                  {item.gameType}
-                </Text>
+            {/* Price & Capacity Row */}
+            <View className="flex-row items-center justify-between mb-3">
+              {/* Price */}
+              <View className="flex-row items-center">
+                <View className={`px-2.5 py-1 rounded-lg ${item.basePrice === 0 ? 'bg-success-100' : 'bg-primary-100'}`}>
+                  <Text className={`text-sm font-bold ${item.basePrice === 0 ? 'text-success-700' : 'text-primary-700'}`}>
+                    {formatPrice(item.basePrice)}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Game Type Badge */}
+              {item.eventType === 'game' && item.gameType && (
+                <View className="flex-row items-center bg-warning-100 px-2 py-1 rounded-lg">
+                  <Ionicons name="game-controller-outline" size={12} color="#d97706" />
+                  <Text className="text-xs font-bold text-warning-700 ml-1">{item.gameType}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Capacity - Only show if data available */}
+            {(item.registeredCount != null && item.capacity != null && item.capacity > 0) ? (
+              <View className="mb-3">
+                <View className="flex-row justify-between items-center mb-1">
+                  <View className="flex-row items-center">
+                    <Ionicons name="people-outline" size={14} color="#6b7280" />
+                    <Text className="text-xs text-gray-600 ml-1.5">{registeredCount}/{capacity}</Text>
+                  </View>
+                  <Text className="text-xs font-bold text-gray-700">{Math.round(capacityPercent)}%</Text>
+                </View>
+                <View className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <View 
+                    className="h-full rounded-full"
+                    style={{ 
+                      width: `${capacityPercent}%`,
+                      backgroundColor: capacityPercent >= 90 ? '#ef4444' : capacityPercent >= 70 ? '#f59e0b' : '#4F46E5'
+                    }}
+                  />
+                </View>
+              </View>
+            ) : (
+              <View className="flex-row items-center mb-3">
+                <View className="bg-gray-100 px-2 py-1 rounded-lg flex-row items-center">
+                  <Ionicons name="information-circle-outline" size={12} color="#6b7280" />
+                  <Text className="text-xs text-gray-500 ml-1">View for details</Text>
+                </View>
               </View>
             )}
-          </View>
 
-          {/* Enhanced Action Buttons */}
-          <View className="flex-row gap-3">
-            <TouchableOpacity
-              className="flex-1 rounded-2xl py-4 flex-row items-center justify-center shadow-xl"
-              style={{ backgroundColor: '#4F46E5' }}
-              onPress={() => router.push(`/(admin)/events/${item.id}/edit`)}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="create" size={20} color="#ffffff" />
-              <Text className="text-base font-black text-white ml-2.5">Edit</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              className="flex-1 bg-gray-100 rounded-2xl py-4 flex-row items-center justify-center border-2 border-gray-200"
-              onPress={() => handleDeleteEvent(item)}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="trash-outline" size={20} color="#ef4444" />
-              <Text className="text-base font-black text-error-600 ml-2.5">Delete</Text>
-            </TouchableOpacity>
+            {/* Action Buttons - Compact */}
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                className="flex-1 bg-primary-600 rounded-xl py-2.5 flex-row items-center justify-center"
+                onPress={() => router.push(`/(admin)/events/${item.id}`)}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="eye-outline" size={16} color="#ffffff" />
+                <Text className="text-sm font-bold text-white ml-1.5">View</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                className="flex-1 bg-gray-100 rounded-xl py-2.5 flex-row items-center justify-center border border-gray-200"
+                onPress={() => router.push(`/(admin)/events/${item.id}/edit` as any)}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="create-outline" size={16} color="#4b5563" />
+                <Text className="text-sm font-bold text-gray-700 ml-1.5">Edit</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                className="w-10 bg-error-50 rounded-xl py-2.5 items-center justify-center border border-error-200"
+                onPress={() => handleDeleteEvent(item)}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="trash-outline" size={16} color="#ef4444" />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+        </Card>
+      </TouchableOpacity>
+    );
+  };
 
   const renderHeader = () => (
-    <View className="mb-5">
-      {/* Enhanced Search Bar */}
-      <View className="bg-white rounded-2xl px-5 mb-4 border-2 border-gray-100 shadow-lg flex-row items-center">
-        <Ionicons name="search" size={24} color="#9ca3af" />
-        <TextInput
-          className="flex-1 py-5 px-4 text-lg text-gray-900 font-medium"
-          placeholder="Search events by name..."
-          value={searchQuery}
-          onChangeText={handleSearch}
-          placeholderTextColor="#9ca3af"
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => handleSearch('')}>
-            <Ionicons name="close-circle" size={24} color="#9ca3af" />
-          </TouchableOpacity>
-        )}
-      </View>
+    <View className="mb-4">
+      {/* Search Bar */}
+      <SearchBar
+        value={searchQuery}
+        onSearch={handleSearch}
+        onClear={() => handleSearch('')}
+        placeholder="Search events..."
+        variant="elevated"
+        showFilter
+        onFilterPress={() => setShowFilters(!showFilters)}
+        containerClassName="mb-3"
+      />
 
-      {/* Enhanced Action Bar */}
-      <View className="flex-row mb-4 gap-3">
+      {/* Action Bar */}
+      <View className="flex-row mb-3 gap-2">
         <TouchableOpacity
-          className="flex-1 bg-white rounded-2xl py-4 border-2 border-primary-200 flex-row items-center justify-center shadow-md"
-          onPress={() => setShowFilters(!showFilters)}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="filter" size={22} color="#4F46E5" />
-          <Text className="text-base font-black text-primary-700 ml-2.5">Filters</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="w-16 h-16 rounded-2xl justify-center items-center shadow-2xl"
-          style={{ backgroundColor: '#4F46E5' }}
+          className="w-12 h-12 rounded-xl justify-center items-center shadow-lg bg-primary-600"
           onPress={() => router.push('/(admin)/events/create')}
           activeOpacity={0.85}
         >
-          <Ionicons name="add" size={32} color="#ffffff" />
+          <Ionicons name="add" size={26} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
-      {/* Enhanced Filters Panel */}
+      {/* Filters Panel */}
       {showFilters && (
-        <View className="bg-white rounded-[24px] p-6 mb-4 border-2 border-gray-100 shadow-xl">
-          <Text className="text-sm font-black text-gray-700 mb-4 uppercase tracking-widest">
-            CATEGORY
-          </Text>
-          <View className="flex-row flex-wrap mb-6">
+        <Card variant="elevated" className="p-4 mb-3">
+          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Category</Text>
+          <View className="flex-row flex-wrap mb-4">
             {CATEGORY_FILTERS.map(filter => (
-              <TouchableOpacity
+              <FilterChip
                 key={filter.value}
-                className={`px-5 py-3 rounded-2xl mr-3 mb-3 ${
-                  selectedCategory === filter.value
-                    ? 'bg-primary-600 shadow-lg'
-                    : 'bg-gray-100 border-2 border-gray-200'
-                }`}
+                label={filter.label}
+                selected={selectedCategory === filter.value}
                 onPress={() => setSelectedCategory(filter.value)}
-                activeOpacity={0.8}
-              >
-                <Text className={`text-base font-black ${
-                  selectedCategory === filter.value ? 'text-white' : 'text-gray-700'
-                }`}>
-                  {filter.label}
-                </Text>
-              </TouchableOpacity>
+                className="mr-2 mb-2"
+              />
             ))}
           </View>
 
-          <Text className="text-sm font-black text-gray-700 mb-4 uppercase tracking-widest">
-            STATUS
-          </Text>
+          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Status</Text>
           <View className="flex-row flex-wrap">
             {STATUS_FILTERS.map(filter => (
-              <TouchableOpacity
+              <FilterChip
                 key={filter.value}
-                className={`px-5 py-3 rounded-2xl mr-3 mb-3 ${
-                  selectedStatus === filter.value
-                    ? 'bg-primary-600 shadow-lg'
-                    : 'bg-gray-100 border-2 border-gray-200'
-                }`}
+                label={filter.label}
+                selected={selectedStatus === filter.value}
                 onPress={() => setSelectedStatus(filter.value)}
-                activeOpacity={0.8}
-              >
-                <Text className={`text-base font-black ${
-                  selectedStatus === filter.value ? 'text-white' : 'text-gray-700'
-                }`}>
-                  {filter.label}
-                </Text>
-              </TouchableOpacity>
+                className="mr-2 mb-2"
+              />
             ))}
           </View>
-        </View>
+        </Card>
       )}
 
-      {/* Enhanced Results Count */}
-      <Text className="text-base font-black text-gray-600 mb-2 uppercase tracking-wide">
+      {/* Results Count */}
+      <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider">
         {events?.length || 0} events found
       </Text>
     </View>
@@ -378,24 +375,21 @@ export default function EventsScreen() {
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#4F46E5" />
-          <Text className="text-gray-600 mt-4 text-lg font-semibold">Loading events...</Text>
-        </View>
+        <Loading fullScreen text="Loading events..." />
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      {/* Enhanced Header */}
-      <View className="px-8 pt-8 pb-4">
-        <Text className="text-5xl font-black text-gray-900 tracking-tighter mb-2">
+      {/* Header - Reduced padding */}
+      <View className="px-5 pt-5 pb-3">
+        <Heading1 className="tracking-tight mb-1">
           Events
-        </Text>
-        <Text className="text-lg text-gray-600 font-semibold">
+        </Heading1>
+        <BodyText color="gray" weight="medium">
           Manage your event portfolio
-        </Text>
+        </BodyText>
       </View>
 
       <FlatList
@@ -414,31 +408,30 @@ export default function EventsScreen() {
         onEndReachedThreshold={0.5}
         ListFooterComponent={
           loadingMore ? (
-            <View className="py-8 items-center">
-              <ActivityIndicator size="small" color="#4F46E5" />
+            <View className="py-6 items-center">
+              <Loading size="small" />
             </View>
           ) : null
         }
         ListEmptyComponent={
-          <View className="items-center py-20">
-            <View className="bg-white rounded-[32px] p-16 items-center shadow-xl border-2 border-gray-50">
-              <MaterialIcons name="event-busy" size={88} color="#d1d5db" />
-              <Text className="text-2xl font-black text-gray-900 mt-6 mb-3">No events found</Text>
-              <Text className="text-base text-gray-500 mb-8 text-center font-medium">
+          <View className="items-center py-12">
+            <Card variant="elevated" className="p-10 items-center">
+              <MaterialIcons name="event-busy" size={64} color="#d1d5db" />
+              <Typography variant="h5" weight="bold" className="mt-4 mb-2">No events found</Typography>
+              <BodyText color="gray" weight="medium" align="center" className="mb-6">
                 Start creating amazing events for your community
-              </Text>
+              </BodyText>
               <TouchableOpacity
-                className="rounded-2xl px-10 py-5 shadow-2xl"
-                style={{ backgroundColor: '#4F46E5' }}
+                className="rounded-xl px-6 py-3 shadow-lg bg-primary-600"
                 onPress={() => router.push('/(admin)/events/create')}
                 activeOpacity={0.85}
               >
-                <Text className="text-lg font-black text-white">Create First Event</Text>
+                <Text className="text-base font-bold text-white">Create First Event</Text>
               </TouchableOpacity>
-            </View>
+            </Card>
           </View>
         }
-        contentContainerStyle={{ paddingHorizontal: 32, paddingBottom: 120 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
