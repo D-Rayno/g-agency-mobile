@@ -45,3 +45,5 @@ app-example
 
 /firebase/*.json
 /firebase/*.plist
+
+.env
